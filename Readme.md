@@ -62,3 +62,103 @@ env GOOS=windows GOARCH=arm go build -v ./
 sangkuriangV2 grpc/proto/simple simple grpc/pb/simple
 
 copy file to go/bin
+
+# create in your bash profile
+sangkuriang() {
+  protoc -I $1 $2.proto --generator_out=$3 -I$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --go_out=plugins=grpc:$3 --grpc-gateway_out=logtostderr=true:$3
+  dep ensure -v
+  echo "files has been generate"
+}
+
+# how to generate
+- add folder proto in folder grpc/proto/simple
+- files name simple.proto
+```
+syntax = "proto3";
+
+option go_package = "simple";
+package simple;
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.MethodOptions {
+    string httpMode = 50056;
+    string agregator = 50062;
+    string testCAse = 50063;
+}
+
+extend google.protobuf.MessageOptions {
+    bool isRepo = 50057;
+}
+
+extend google.protobuf.FieldOptions {
+    bool ignoreFieldDb = 50058;
+    bool isPrimaryKey = 50059;
+    bool required = 50060;
+    string required_type = 50061;
+}
+
+service simple {
+    rpc HelloWorld(google.protobuf.Empty) returns(HelloWorldMessage) {
+        option (google.api.http) = {
+            get: "/v1/example/echo"
+        };
+        option(httpMode) = "get";
+        option(testCAse) = "test-api-payment";
+    };
+
+    rpc HelloWorldGetWithParam(Test) returns(HelloWorldMessage) {
+        option (google.api.http) = {
+            get: "/v1/example/echo"
+        };
+    };
+
+    rpc HelloTest(Test) returns(HelloWorldMessage) {
+        option (google.api.http) = {
+            post: "/v1/example/echo",
+            body: '*'
+        };
+        option(httpMode) = "post";
+    };
+    rpc HelloBring(HelloWorldMessage) returns(HelloWorldMessage) {
+        option (google.api.http) = {
+            delete: "/v1/example/echo"
+        };
+        option(httpMode) = "delete";
+        option(agregator) = "HelloWorldMessage.Create";
+    };
+}
+
+message HelloWorldMessage {
+    option (isRepo) = true;
+    string name = 1 [(isPrimaryKey) = true, (required) = true, (required_type) ="min_max*5.10"];
+    string message = 2 [(required) = true, (required_type) ="not_empty_string"];
+    repeated Test test = 3 [(ignoreFieldDb) = true];
+    Single single = 4;
+    string email = 5 [(required) = true, (required_type) ="email"];
+}
+
+message Test {
+    string data_test = 1 [(isPrimaryKey) = true];
+    int64 numbers_data = 2;
+    bool ex_bool = 3;
+    option (isRepo) = true;
+}
+
+enum TType {
+    CREATE = 0;
+    UPDATE = 1;
+    DELETE = 2;
+}
+
+message Single {
+    string who = 1;
+    TType ttypes = 2; 
+}
+```
+
+- run this command
+sangkuriang grpc/proto/simple simple grpc/pb/simple
+- boooommmmmm
