@@ -26,6 +26,7 @@ func main() {
 		template.ListMain,
 		template.ListToml,
 		// template.ListMainv2,
+		// template.ListTomlv2,
 	}
 	res, err := lib.NewMaster(list).Generate()
 
