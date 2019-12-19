@@ -25,7 +25,7 @@ func main() {
 		template.ListCoreValidation,
 		template.ListMain,
 		template.ListToml,
-		template.ListMainv2,
+		// template.ListMainv2,
 	}
 	res, err := lib.NewMaster(list).Generate()
 

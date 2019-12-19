@@ -29,6 +29,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"net"
 	"net/http"
+	"fmt"
 )
 
 func runHTTP() error {
@@ -44,6 +45,16 @@ func runHTTP() error {
 	}
 
 	return http.ListenAndServe(":8081", mux)
+}
+
+
+// CustomLogger for custome logger
+func CustomLogger(code codes.Code) logrus.Level {
+	if code == codes.OK {
+		return logrus.InfoLevel
+	}
+
+	return logrus.WarnLevel
 }
 
 func InitDB(address string, dbName string) *gorm.DB {
@@ -72,7 +83,9 @@ func main() {
 	db := InitDB("fec-ticketing-stag-mysql.statefulset.svc.cluster.local", "ticketing")
 	lis, errList := net.Listen("tcp", ":8080")
 
-	log.Fatal(errList)
+	if errList != nil {
+		log.Fatal(errList)
+	}
 
 	masterRepo := repo.NewMasterRepoService(db)
 	masterService := sv.New{{ ucfirst (getFirstService .Services).Name }}Service(masterRepo)
@@ -103,11 +116,11 @@ func main() {
 
 	pb.Register{{ ucfirst (getFirstService .Services).Name }}Server(server, handler)
 
-	go func() {
-		if err := server.Serve(lis); err != nil {
+	go func() {{ unescape "{" }}
+		if err := server.Serve(lis); err != nil {{ unescape "{" }}
 			log.Fatalf("failed to serve: %v", err)
-		}
-	}()
+		{{ unescape "}" }}
+	{{ unescape "}" }}()
 
 	log.Println("starting server")
 
