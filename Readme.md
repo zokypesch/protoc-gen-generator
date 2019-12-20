@@ -162,3 +162,5 @@ message Single {
 - run this command
 sangkuriang grpc/proto/simple simple grpc/pb/simple
 - boooommmmmm
+
+protoc --go_out=. proto/options.proto
