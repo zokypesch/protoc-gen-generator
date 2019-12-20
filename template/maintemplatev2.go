@@ -132,7 +132,7 @@ func main() {
 `
 
 var ListMainv2 = lib.List{
-	FileType: ".main.go.v2",
+	FileType: ".main.go",
 	Template: tmplMainGov2,
 	Location: "./",
 	Lang:     "go",

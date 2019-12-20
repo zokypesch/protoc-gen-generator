@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.MethodOptions {
+    string httpMode = 50056;
+    string agregator = 50062;
+}
+
+extend google.protobuf.MessageOptions {
+    string foo = 50001;
+    bool isRepo = 50057;
+}
+
+extend google.protobuf.FieldOptions {
+    bool ignoreFieldDb = 50058;
+    bool isPrimaryKey = 50059;
+    bool required = 50060;
+    string required_type = 50061;
+}

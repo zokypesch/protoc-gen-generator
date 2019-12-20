@@ -19,13 +19,13 @@ func main() {
 		template.ListMasterRepoGolang,
 		template.ListHandler,
 		template.ListConfig,
-		template.ListYaml,
-		template.ListEnv,
+		// template.ListYaml,
+		// template.ListEnv,
 		template.ListService,
 		template.ListCoreValidation,
-		template.ListMain,
-		template.ListToml,
-		// template.ListMainv2,
+		// template.ListMain,
+		// template.ListToml,
+		template.ListMainv2,
 		// template.ListTomlv2,
 	}
 	res, err := lib.NewMaster(list).Generate()
