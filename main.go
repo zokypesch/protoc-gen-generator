@@ -26,7 +26,7 @@ func main() {
 		template.ListMain, //disable for reason
 		template.ListToml, //disable for reason
 		// template.ListMainv2, //non-disable for reason
-		template.ListTomlv2, //disable for reason
+		// template.ListTomlv2, //disable for reason
 	}
 	res, err := lib.NewMaster(list).Generate()
 
