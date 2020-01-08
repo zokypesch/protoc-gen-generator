@@ -163,4 +163,33 @@ message Single {
 sangkuriang grpc/proto/simple simple grpc/pb/simple
 - boooommmmmm
 
+
+```
+{{- range $field := $method.InputMessage.Fields }}
+{{- if $field.RequiredOption}}
+	if err := core.Validate("{{ $field.RequiredType }}", in.{{ ucfirst $field.Name }}, "{{ ucfirst $field.Name }}"); err != nil {
+		return &pb.{{ ucfirst $method.Output }}{}, err
+	}
+{{- end}}
+{{- end}}
+
+repo backup
+func (repo *{{ ucfirst $msg.Name }}Repository) Update({{ ucdown $msg.PrimaryKeyName }} {{ $msg.PrimaryKeyType }}, payload *model.{{ ucfirst $msg.Name }}) (*model.{{ ucfirst $msg.Name }}, error) {
+	err := repo.db.Model(&model.{{ ucfirst $msg.Name }}{{unescape "{"}}{{ $msg.PrimaryKeyName }}: {{ ucdown $msg.PrimaryKeyName }}{{unescape "}"}}).Update(payload).Error
+
+	return payload, err
+}
+
+func (repo *{{ ucfirst $msg.Name }}Repository) Delete({{ ucdown $msg.PrimaryKeyName }} {{ $msg.PrimaryKeyType }}) error {
+	err := repo.db.Delete(model.{{ ucfirst $msg.Name }}{{unescape "{"}}{{unescape "}"}}, "{{ underscore $msg.PrimaryKeyName }} = ?", {{ ucdown $msg.PrimaryKeyName }}).Error
+
+	return err
+}
+
+Delete({{ $msg.PrimaryKeyName }} {{ $msg.PrimaryKeyType }}) error
+
+GetBy{{ $msg.PrimaryKeyName }}({{ $msg.PrimaryKeyName }} {{ $msg.PrimaryKeyType }}) *model.{{ ucfirst $msg.Name }}
+```
+
+# generate option
 protoc --go_out=. proto/options.proto

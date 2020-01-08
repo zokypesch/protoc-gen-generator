@@ -14,22 +14,41 @@ import  (
 	// "fmt"
 	empty "github.com/golang/protobuf/ptypes/empty"
 	repo "{{ .Src }}/repo"
-	// model "{{ .Src }}/model"
+	{{- if .Elastic }}
+	core "{{ .Src }}/core"
+	{{- end}}
+	model "{{ .Src }}/model"
 )
 
 {{- range $service := .Services }}
 type {{ ucfirst $service.Name }}Service struct{
 	repo *repo.MasterRepository
+	{{if $service.Elastic }}
+	{{- range $msg := $service.AllMessage }}
+	{{- if $msg.IsElastic }}
+	es{{ ucfirst $msg.Name }} core.ESModule
+	{{- end}}
+	{{- end}}
+	{{- end}}
 }
 
 // {{ ucfirst $service.Name }}Svc for service singleton
 var {{ $service.Name }}Svc *{{ ucfirst $service.Name }}Service
 
 // New{{ ucfirst $service.Name }}Service for new repository service
+{{if $service.Elastic }}
+func New{{ ucfirst $service.Name }}Service(repo *repo.MasterRepository,{{ $service.MessageAllEs }}) *{{ ucfirst $service.Name }}Service {
+{{- else}}
 func New{{ ucfirst $service.Name }}Service(repo *repo.MasterRepository) *{{ ucfirst $service.Name }}Service {
+{{- end}}
 	if {{ $service.Name }}Svc == nil {
 		{{ $service.Name }}Svc = &{{ ucfirst $service.Name }}Service{
 			repo,
+			{{- range $msg := $service.AllMessage }}
+			{{- if $msg.IsElastic }}
+			es{{ ucfirst $msg.Name }},
+			{{- end}}
+			{{- end}}
 		}
 	}
 	return {{ $service.Name }}Svc
@@ -42,7 +61,31 @@ func (svc *{{ ucfirst $service.Name }}Service) {{ ucfirst $method.Name }}(ctx co
 {{- else}}
 func (svc *{{ ucfirst $service.Name }}Service) {{ ucfirst $method.Name }}(ctx context.Context, in *pb.{{ ucfirst $method.Input }}) (*pb.{{ ucfirst $method.Output }}, error) {
 {{- end}}
+
+{{- if eq $method.Input "empty"}}
 	return &pb.{{ ucfirst $method.Output }}{}, nil
+{{- else}}
+{{- if $method.IsAgregator}}
+	model := &model.{{ ucfirst $method.AgregatorMessage.Name }}{}
+{{- range $field := $method.InputWithAgregator.Fields }}
+{{- if eq $field.IgnoreGorm false}}
+	model.{{ ucfirst $field.Name }} = in.{{ ucfirst $field.Name }}
+{{- end}}
+{{- end}}
+	_, err := svc.repo.{{ ucfirst $method.AgregatorMessage.Name }}.{{ $method.AgregatorFunction }}(model)
+
+	resp := &pb.{{ ucfirst $method.Output }}{}
+{{- range $field := $method.IO.Fields }}
+{{- if eq $field.IgnoreGorm false }}
+	resp.{{ ucfirst $field.Name }} = model.{{ ucfirst $field.Name }}
+{{- end}}
+{{- end}}
+	return resp, err
+
+{{- else}}
+	return &pb.{{ ucfirst $method.Output }}{}, nil
+{{- end}}
+{{- end}}
 }
 {{- end}}
 {{- end}}

@@ -24,6 +24,10 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	pb "{{ .Src }}/grpc/pb/{{ .GoPackage }}"
+	{{- if .Elastic }}
+	core "{{ .Src }}/core"
+	model "{{ .Src }}/model"
+	{{- end}}
 )
 
 func main() {
@@ -32,7 +36,17 @@ func main() {
 	db := mysql.Init(cfg.PREFIX)
 
 	masterRepo := repo.NewMasterRepoService(db)
+{{- range $msg := .Messages }}
+{{- if $msg.IsElastic }}
+	es{{ ucfirst $msg.Name }} := core.NewEsCore(cfg.ESAddress, "{{ $msg.Name }}ing", model.Mapping{{ ucfirst $msg.Name }}, "{{ $msg.Name }}")
+{{- end}}
+{{- end}}
+
+{{- if .Elastic }}
+	masterService := sv.New{{ ucfirst (getFirstService .Services).Name }}Service(masterRepo,{{ .MessageAll }})
+{{- else}}
 	masterService := sv.New{{ ucfirst (getFirstService .Services).Name }}Service(masterRepo)
+{{- end}}
 
 	handler := sv.New{{ ucfirst (getFirstService .Services).Name }}(masterService)
 	// masterService.Auth.GetAll(context.TODO())

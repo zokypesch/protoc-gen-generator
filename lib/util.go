@@ -71,14 +71,19 @@ func ucDown(s string) string {
 }
 
 func stringToOpt(param string) []*Option {
+
 	onOpt := strings.Split(param, " ")
 	var newOptions []*Option
+
+	// log.Println(param, onOpt)
 
 	for _, vOnOpt := range onOpt {
 		splitV := strings.Split(vOnOpt, ":")
 		if len(splitV) < 2 {
+			// log.Println("skip", vOnOpt)
 			continue
 		}
+		// log.Println(splitV[0], cleanQuote(splitV[1]))
 		newOptions = append(newOptions, &Option{
 			Code:  splitV[0],
 			Name:  splitV[0],
@@ -106,6 +111,10 @@ func getStringFromOptCode(param string) string {
 		return "requiredType"
 	case "50062":
 		return "agregator"
+	case "50063":
+		return "fulltext"
+	case "50064":
+		return "elastic"
 	}
 	return ""
 }
@@ -115,6 +124,11 @@ var listStringOfMethod = map[string]string{
 	`\\x10`:    "post",
 	`\x1a\x10`: "put",
 	`*\x10`:    "delete",
+
+	`\x12\x0f`: "get",
+	`\\x0f`:    "post",
+	`\x1a\x0f`: "put",
+	`*\x0f`:    "delete",
 }
 
 func getHttpModeWithUrl(param string) (string, string) {
@@ -125,6 +139,18 @@ func getHttpModeWithUrl(param string) (string, string) {
 		}
 	}
 	return "get", ""
+}
+
+func getHttpUrl(param string) string {
+	i := strings.Index(param, `/`)
+
+	if i == -1 {
+		return ""
+	}
+
+	chars := param[i:]
+	return chars
+
 }
 
 func cleanQuote(param string) string {

@@ -18,7 +18,7 @@ import (
 
 type fileGenerator func(protoFile *descriptor.FileDescriptorProto) (*plugin.CodeGeneratorResponse_File, error)
 
-type fileGeneratorMulti func(protoFile *descriptor.FileDescriptorProto, listTemp List) (*plugin.CodeGeneratorResponse_File, string, error)
+type fileGeneratorMulti func(protoFile *descriptor.FileDescriptorProto, listTemp List) (*plugin.CodeGeneratorResponse_File, string, Data, error)
 
 type generator struct {
 	*googlegen.Generator
@@ -55,13 +55,13 @@ func (g *generator) generateMulti(generateFile fileGeneratorMulti, listParam []L
 		for _, genFile := range listParam {
 			g.Reset()
 			response := &plugin.CodeGeneratorResponse{}
-			file, pkgName, err := generateFile(protoFile, genFile)
+			file, pkgName, datas, err := generateFile(protoFile, genFile)
 			if err != nil {
 				return after, err
 			}
 			response.File = append(response.File, file)
 			// errWrite := writeResponse(g.writer, response)
-			res, errWrite := writeResponseWithList(g.writer, response, genFile, pkgName)
+			res, errWrite := writeResponseWithList(g.writer, response, genFile, pkgName, datas)
 			if errWrite != nil {
 				return after, errWrite
 			}
@@ -135,7 +135,7 @@ func writeResponse(w io.Writer, response *plugin.CodeGeneratorResponse) error {
 	return nil
 }
 
-func writeResponseWithList(w io.Writer, response *plugin.CodeGeneratorResponse, list List, pkgName string) (string, error) {
+func writeResponseWithList(w io.Writer, response *plugin.CodeGeneratorResponse, list List, pkgName string, datas Data) (string, error) {
 	_, err := proto.Marshal(response)
 	// _, err := proto.Marshal(response)
 	if err != nil {
@@ -166,6 +166,11 @@ func writeResponseWithList(w io.Writer, response *plugin.CodeGeneratorResponse, 
 		fileName = "service.yaml"
 	} else if list.Lang == "toml" {
 		fileName = "Gopkg.toml"
+	} else if list.Lang == "elastic" {
+		if !datas.Elastic {
+			return "", nil
+		}
+		fileName = "elastic.go"
 	}
 
 	content := response.GetFile()[0].GetContent()

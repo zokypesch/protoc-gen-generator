@@ -2,6 +2,7 @@ package lib
 
 import (
 	// "go/format"
+	"fmt"
 	"go/build"
 	"os"
 	"path"
@@ -68,12 +69,12 @@ func (g *Operations) setCurrentList(index int) {
 }
 
 // func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, listTemp List) (*plugin.CodeGeneratorResponse_File, error) {
-func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, listTemp List) (*plugin.CodeGeneratorResponse_File, string, error) {
+func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, listTemp List) (*plugin.CodeGeneratorResponse_File, string, Data, error) {
 	if protoFile.Name == nil {
-		return nil, "", errors.New("missing filename")
+		return nil, "", Data{}, errors.New("missing filename")
 	}
 	if protoFile.GetOptions().GetGoPackage() == "" {
-		return nil, "", errors.New("missing go_package")
+		return nil, "", Data{}, errors.New("missing go_package")
 	}
 
 	// initial message
@@ -88,6 +89,10 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 	var newMessage []Message
 	var enums []*Enum
 	methodsNameAll := ""
+	messageAllEs := ""
+	messageAllEsSvc := ""
+	indexMsgEs := 0
+	useElastic := false
 
 	// get message in proto
 	for iMType, messageType := range protoFile.MessageType {
@@ -104,7 +109,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 		}
 
 		// get field in message
-		for _, messageField := range messageType.Field {
+		for kMessageField, messageField := range messageType.Field {
 			typeData := messageField.GetType().String()
 			typeDataGo := messageField.GetType().String()
 			originalName := messageField.GetName()
@@ -122,7 +127,6 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 				typeDataGo = grpcTypeToGo(typeDataGo)
 				originalType = typeDataGo
 			}
-			// log.Println(typeData, messageField.GetTypeName(), messageField.GetOptions())
 			isRepeated := false
 
 			if "LABEL_REPEATED" == messageField.GetLabel().String() {
@@ -137,6 +141,8 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 			isPrimaryKey := false
 			isRequiredField := false
 			requiredType := ""
+			tagField := ""
+			fullText := false
 
 			// get options in field
 			for _, vOptField := range newFieldOptions {
@@ -144,6 +150,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 				case "ignoreFieldDb":
 					if res, err := strconv.Atoi(vOptField.Value); err == nil && res == 1 {
 						ignoreGorm = true
+						tagField += `gorm:"-"`
 					}
 				case "isPrimaryKey":
 					isPrimaryKey = true
@@ -155,9 +162,13 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 					}
 				case "requiredType":
 					requiredType = vOptField.Value
+					tagField += fmt.Sprintf(` validate:"%s"`, requiredType)
+				case "fulltext":
+					if res, err := strconv.Atoi(vOptField.Value); err == nil && res == 1 {
+						fullText = true
+					}
 				}
 			}
-			// log.Println(isRequiredField, " jalanin")
 			newField = append(newField, Field{
 				Name:           messageField.GetJsonName(),
 				NameGo:         underscoreToGoFormat(messageField.GetName()),
@@ -171,8 +182,10 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 				OriginalType:   originalType,
 				RequiredOption: isRequiredField,
 				RequiredType:   requiredType,
+				Tag:            tagField,
+				FullText:       fullText,
+				Index:          kMessageField + 1,
 			})
-			// log.Println(typeData)
 		}
 
 		// get enum declare in message protofile
@@ -195,25 +208,42 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 		// get message options
 		newMessageOptions := stringToOpt(messageType.GetOptions().String())
 		isRepo := false
+		elastic := false
 		for _, vOpt := range newMessageOptions {
 			switch getStringFromOptCode(vOpt.Code) {
 			case "isRepository":
 				if res, err := strconv.Atoi(vOpt.Value); err == nil && res == 1 {
 					isRepo = true
 				}
+			case "elastic":
+				if res, err := strconv.Atoi(vOpt.Value); err == nil && res == 1 {
+					elastic = true
+					useElastic = true
+					if indexMsgEs == 0 {
+						messageAllEs += "es" + ucFirst(messageName)
+						messageAllEsSvc += "es" + ucFirst(messageName) + " core.ESModule"
+					} else {
+						messageAllEs += "," + "es" + ucFirst(messageName)
+						messageAllEsSvc += "," + "es" + ucFirst(messageName) + " core.ESModule"
+					}
+					indexMsgEs++
+				}
 			}
+
 		}
 
 		newMessage = append(newMessage, Message{
+			Index:          iMType + 1,
 			Name:           ucDown(messageName),
 			Fields:         newField,
 			Options:        newMessageOptions,
 			IsRepository:   isRepo,
 			PrimaryKeyName: primaryKeyName,
 			PrimaryKeyType: primaryKeyType,
+			IsElastic:      elastic,
+			NumField:       len(newField),
 		})
 
-		// log.Println(messageType.GetName())
 	}
 
 	// get enum ini protofile
@@ -235,11 +265,8 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 
 	datas.Messages = newMessage
 	datas.Enums = enums
-
-	// check enums
-	// for _, vCheckEnum := range datas.Enums {
-	// 	log.Println(vCheckEnum.Name, vCheckEnum.Option, vCheckEnum.Value)
-	// }
+	datas.NumMessage = len(newMessage)
+	datas.MessageAll = messageAllEs
 
 	// get service in protofile
 	for kSvc, svc := range protoFile.Service {
@@ -247,12 +274,6 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 
 		// get method inside service
 		for i, method := range svc.Method {
-			// log.Println(method, i)
-			// if i == 0 {
-			// 	methodsNameAll += "Output" + ucFirst(*method.Name)
-			// } else {
-			// 	methodsNameAll += ", Output" + ucFirst(*method.Name)
-			// }
 			methodsNameAll += ", Output" + ucFirst(*method.Name)
 
 			methOpt := method.GetOptions().String()
@@ -267,9 +288,11 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 			for _, vOpt := range newOptions {
 				switch getStringFromOptCode(vOpt.Code) {
 				case "urlPath":
-					newURL, newMode := getHttpModeWithUrl(vOpt.Value)
-					httpMode = newMode
-					urlPath = newURL
+					// newURL, newMode := getHttpModeWithUrl(vOpt.Value)
+					// httpMode = newMode
+					urlPath = getHttpUrl(vOpt.Value)
+				case "httpMode":
+					httpMode = vOpt.Value
 				case "agregator":
 					isAgregator = true
 					msgFun := strings.Split(vOpt.Value, ".")
@@ -287,44 +310,37 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 
 			inputMessage := getMessageByName(typeInputMethod, datas.Messages)
 			outputMessage := getMessageByName(typeOutputMethod, datas.Messages)
+			inputOutputMessage := getIO(outputMessage, agregatorMessage)
+			inputWithAgregator := getIO(inputMessage, agregatorMessage)
 
 			methods[i] = &Method{
-				Name:              ucFirst(*method.Name),
-				Input:             typeInputMethod,
-				Output:            typeOutputMethod,
-				Options:           newOptions,
-				HttpMode:          httpMode,
-				URLPath:           urlPath,
-				InputMessage:      inputMessage,
-				OutputMessage:     outputMessage,
-				IsAgregator:       isAgregator,
-				AgregatorMessage:  agregatorMessage,
-				AgregatorFunction: agregatorFunction,
+				Name:               ucFirst(*method.Name),
+				Input:              typeInputMethod,
+				Output:             typeOutputMethod,
+				Options:            newOptions,
+				HttpMode:           httpMode,
+				URLPath:            urlPath,
+				InputMessage:       inputMessage,
+				OutputMessage:      outputMessage,
+				IO:                 inputOutputMessage,
+				IsAgregator:        isAgregator,
+				AgregatorMessage:   agregatorMessage,
+				AgregatorFunction:  agregatorFunction,
+				InputWithAgregator: inputWithAgregator,
 			}
 		}
-
-		// for _, vM := range methods {
-		// 	for _, vOp := range vM.Options {
-		// 		log.Println(vOp.Code, vOp.Value)
-		// 	}
-		// }
-
 		// put service in datas
 		datas.Services[kSvc] = Service{
-			Name:        googlegen.CamelCase(svc.GetName()),
-			Methods:     methods,
-			MethodsName: methodsNameAll,
+			Name:         googlegen.CamelCase(svc.GetName()),
+			Methods:      methods,
+			MethodsName:  methodsNameAll,
+			MessageAllEs: messageAllEsSvc,
+			AllMessage:   newMessage,
+			Elastic:      useElastic,
 		}
-		// datas.Services = append(datas.Services, Service{
-		// 	Name:    googlegen.CamelCase(svc.GetName()),
-		// 	Methods: methods,
-		// })
 	}
 
-	// for _, svcTest := range datas.Services {
-	// 	log.Println(svcTest.Name, svcTest.Methods)
-	// }
-
+	datas.Elastic = useElastic
 	// get current folder path for assign src
 	gopath := os.Getenv("GOPATH")
 	if gopath == "" {
@@ -356,24 +372,19 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 
 	if err != nil {
 		log.Println("here error", err)
-		return nil, "", err
+		return nil, "", datas, err
 	}
 
 	// generate protobuffer
 	g.Generator.P(buf.String())
 
-	// check format golang
-	// formatted, err := format.Source(g.Generator.Bytes())
-	// if err != nil {
-	// 	return nil, err
-	// }
 	formatted := g.Generator.Bytes()
 
 	// return code generator response
 	return &plugin.CodeGeneratorResponse_File{
 		Name:    proto.String(ucFirst(protoFileBaseName(*protoFile.Name)) + curList.FileType), // ".custom.pb.go"
 		Content: proto.String(string(formatted)),
-	}, protoFile.GetOptions().GetGoPackage(), nil
+	}, protoFile.GetOptions().GetGoPackage(), datas, nil
 }
 
 func protoFileBaseName(name string) string {
@@ -390,4 +401,24 @@ func getMessageByName(name string, messages []Message) Message {
 		}
 	}
 	return Message{}
+}
+
+func getIO(input Message, output Message) Message {
+	var fields []Field
+	index := 1
+	for _, v := range input.Fields {
+		for _, v2 := range output.Fields {
+			if v.Name == v2.Name && v.TypeDataGo == v2.TypeDataGo {
+				newField := Field(v)
+				newField.Index = index
+
+				fields = append(fields, newField)
+				index++
+			}
+		}
+	}
+	return Message{
+		Name:   output.Name,
+		Fields: fields,
+	}
 }

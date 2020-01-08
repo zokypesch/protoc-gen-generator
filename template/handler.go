@@ -12,16 +12,19 @@ import  (
 	pb "{{ .Src }}/grpc/pb/{{ .GoPackage }}"
 	"context"
 	empty "github.com/golang/protobuf/ptypes/empty"
-	core "{{ .Src }}/core"
+	validator "github.com/go-playground/validator"
+	model "{{ .Src }}/model"
 )
 
 {{- range $service := .Services }}
 type {{ ucfirst $service.Name }} struct{
 	svc *{{ ucfirst $service.Name }}Service
+	validate *validator.Validate
 }
 
 func New{{ ucfirst $service.Name }}(svc *{{ ucfirst $service.Name }}Service) *{{ ucfirst $service.Name }} {
-	return &{{ ucfirst $service.Name }}{{ unescape "{" }}svc{{ unescape "}" }}
+	validate := validator.New()
+	return &{{ ucfirst $service.Name }}{{ unescape "{" }}svc, validate{{ unescape "}" }}
 }
 
 {{- range $method := $service.Methods }}
@@ -34,15 +37,17 @@ func (handler *{{ ucfirst $service.Name }}) {{ ucfirst $method.Name }}(ctx conte
 
 {{- if eq $method.Input "empty"}}
 {{- else}}
+	model := model.{{ ucfirst $method.Input }}{}
 
 {{- range $field := $method.InputMessage.Fields }}
 {{- if $field.RequiredOption}}
-	if err := core.Validate("{{ $field.RequiredType }}", in.{{ ucfirst $field.Name }}, "{{ ucfirst $field.Name }}"); err != nil {
-		return &pb.{{ ucfirst $method.Output }}{}, err
-	}
+	model.{{ ucfirst $field.Name }} = in.{{ ucfirst $field.Name }}
 {{- end}}
 {{- end}}
 
+	if err := handler.validate.Struct(model); err != nil {
+		return &pb.{{ ucfirst $method.Output }}{}, err
+	}
 {{- end}}
 	return handler.svc.{{ ucfirst $method.Name }}(ctx, in)
 }

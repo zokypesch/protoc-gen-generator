@@ -23,11 +23,11 @@ type {{ ucfirst $msg.Name }}Repository struct {
 
 // {{ ucfirst $msg.Name }}Service for interfacing repository
 type {{ ucfirst $msg.Name }}Service interface {
-	GetBy{{ $msg.PrimaryKeyName }}({{ $msg.PrimaryKeyName }} {{ $msg.PrimaryKeyType }}) *model.{{ ucfirst $msg.Name }}
-	GetAll(page int) []model.{{ ucfirst $msg.Name }}
+	GetBy{{ $msg.PrimaryKeyName }}(payload *model.{{ ucfirst $msg.Name }}) (*model.{{ucfirst $msg.Name}}, error)
+	GetAll(payload *model.{{ ucfirst $msg.Name }}) ([]model.{{ ucfirst $msg.Name }}, error)
 	Create(payload *model.{{ ucfirst $msg.Name }}) (*model.{{ucfirst $msg.Name}}, error)
-	Update({{ $msg.PrimaryKeyName }} {{ $msg.PrimaryKeyType }}, payload *model.{{ ucfirst $msg.Name }}) (*model.{{ ucfirst $msg.Name }}, error)
-	Delete({{ $msg.PrimaryKeyName }} {{ $msg.PrimaryKeyType }}) error
+	Update(payload *model.{{ ucfirst $msg.Name }}) (*model.{{ ucfirst $msg.Name }}, error)
+	Delete(payload *model.{{ ucfirst $msg.Name }}) (*model.{{ ucfirst $msg.Name }}, error)
 }
 
 // {{ ucfirst $msg.Name }} for repository singleton
@@ -44,22 +44,23 @@ func New{{ ucfirst $msg.Name }}Service(db *gorm.DB) {{ ucfirst $msg.Name }}Servi
 }
 
 // GetBy{{ $msg.PrimaryKeyName }} for get by primarykey
-func (repo *{{ ucfirst $msg.Name }}Repository) GetBy{{ $msg.PrimaryKeyName }}({{ ucdown $msg.PrimaryKeyName }} {{ $msg.PrimaryKeyType }}) *model.{{ ucfirst $msg.Name }} {
+func (repo *{{ ucfirst $msg.Name }}Repository) GetBy{{ $msg.PrimaryKeyName }}(payload *model.{{ ucfirst $msg.Name }}) (*model.{{ ucfirst $msg.Name }}, error) {
 	var data model.{{ ucfirst $msg.Name }}
-	repo.db.Where("{{ underscore $msg.PrimaryKeyName }} = ?", {{ ucdown $msg.PrimaryKeyName }}).Find(&data)
+	db := repo.db.Where("{{ underscore $msg.PrimaryKeyName }} = ?", payload.{{ ucfirst $msg.PrimaryKeyName }}).Find(&data)
 
-	return &data 
+	return &data, db.Error
 }
 
 // GetAll for get all from table
-func (repo *{{ ucfirst $msg.Name }}Repository) GetAll(page int) []model.{{ ucfirst $msg.Name }} {
-	limit := 20
+func (repo *{{ ucfirst $msg.Name }}Repository) GetAll(payload *model.{{ ucfirst $msg.Name }}) ([]model.{{ ucfirst $msg.Name }}, error) {
+	limit := 1000
+	page := 1
 	offset := (int(page) - 1) * limit
 
 	var data []model.{{ ucfirst $msg.Name }} 
-	repo.db.Offset(offset).Limit(limit).Find(&data)
+	db := repo.db.Where(payload).Offset(offset).Limit(limit).Find(&data)
 
-	return data
+	return data, db.Error
 
 }
 
@@ -71,17 +72,17 @@ func (repo *{{ ucfirst $msg.Name }}Repository) Create(payload *model.{{ ucfirst 
 }
 
 // Update for update data
-func (repo *{{ ucfirst $msg.Name }}Repository) Update({{ ucdown $msg.PrimaryKeyName }} {{ $msg.PrimaryKeyType }}, payload *model.{{ ucfirst $msg.Name }}) (*model.{{ ucfirst $msg.Name }}, error) {
-	err := repo.db.Model(&model.{{ ucfirst $msg.Name }}{{unescape "{"}}{{ $msg.PrimaryKeyName }}: {{ ucdown $msg.PrimaryKeyName }}{{unescape "}"}}).Update(payload).Error
+func (repo *{{ ucfirst $msg.Name }}Repository) Update(payload *model.{{ ucfirst $msg.Name }}) (*model.{{ ucfirst $msg.Name }}, error) {
+	err := repo.db.Model(&model.{{ ucfirst $msg.Name }}{{unescape "{"}}{{ $msg.PrimaryKeyName }}: payload.{{ ucfirst $msg.PrimaryKeyName }}{{unescape "}"}}).Update(payload).Error
 
 	return payload, err
 }
 
 // Delete for delete data
-func (repo *{{ ucfirst $msg.Name }}Repository) Delete({{ ucdown $msg.PrimaryKeyName }} {{ $msg.PrimaryKeyType }}) error {
-	err := repo.db.Delete(model.{{ ucfirst $msg.Name }}{{unescape "{"}}{{unescape "}"}}, "{{ underscore $msg.PrimaryKeyName }} = ?", {{ ucdown $msg.PrimaryKeyName }}).Error
+func (repo *{{ ucfirst $msg.Name }}Repository) Delete(payload *model.{{ ucfirst $msg.Name }}) (*model.{{ ucfirst $msg.Name }}, error) {
+	err := repo.db.Delete(model.{{ ucfirst $msg.Name }}{{unescape "{"}}{{unescape "}"}}, "{{ underscore $msg.PrimaryKeyName }} = ?", payload.{{ ucfirst $msg.PrimaryKeyName }}).Error
 
-	return err
+	return payload, err
 }
 
 {{- end}}

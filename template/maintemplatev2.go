@@ -30,6 +30,10 @@ import (
 	"net"
 	"net/http"
 	"fmt"
+	{{- if .Elastic }}
+	core "{{ .Src }}/core"
+	model "{{ .Src }}/model"
+	{{- end}}
 )
 
 func runHTTP() error {
@@ -88,8 +92,19 @@ func main() {
 	}
 
 	masterRepo := repo.NewMasterRepoService(db)
-	masterService := sv.New{{ ucfirst (getFirstService .Services).Name }}Service(masterRepo)
+	
+{{- range $msg := .Messages }}
+{{- if $msg.IsElastic }}
+	es{{ ucfirst $msg.Name }} := core.NewEsCore("http://fec-ticketing-stag-es.statefulset.svc.cluster.local:9200", "{{ $msg.Name }}ing", model.Mapping{{ ucfirst $msg.Name }}, "{{ $msg.Name }}")
+{{- end}}
+{{- end}}
 
+{{- if .Elastic }}
+	masterService := sv.New{{ ucfirst (getFirstService .Services).Name }}Service(masterRepo,{{ .MessageAll }})
+{{- else}}
+	masterService := sv.New{{ ucfirst (getFirstService .Services).Name }}Service(masterRepo)
+{{- end}}
+	
 	handler := sv.New{{ ucfirst (getFirstService .Services).Name }}(masterService)
 	
 	logger := &logrus.Logger{}

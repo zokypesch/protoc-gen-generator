@@ -12,7 +12,7 @@ var tmplModelGo = `package model
 // {{ ucfirst $msg.Name }} for struct info
 type {{ ucfirst $msg.Name }} struct {
 {{- range $field := $msg.Fields }}
-	{{ $field.NameGo }}			{{ $field.TypeDataGo }} {{- if $field.IgnoreGorm}} 'gorm:"-"' {{- end}}
+	{{ $field.NameGo }}			{{ $field.TypeDataGo }} {{- if eq $field.Tag "" }} {{- else}} '{{ unescape $field.Tag }}' {{- end}}
 {{- end}}
 }
 {{- end}}
@@ -20,6 +20,42 @@ type {{ ucfirst $msg.Name }} struct {
 {{- range $enum := .Enums }}
 type {{ ucfirst $enum.Name }} int32
 
+{{- end}}
+
+{{- if .Elastic }}
+{{- range $msg := .Messages }}
+
+{{- if $msg.IsElastic }}
+
+const Mapping{{ ucfirst $msg.Name }} = '{
+	"settings":{
+		"number_of_shards": 1,
+		"number_of_replicas": 0
+	},
+	"mappings":{
+		"inbox":{
+			"properties":{
+			{{- range $field := $msg.Fields }}
+				{{- if $field.FullText}}
+				"{{ ucdown $field.Name }}":{
+					"type":"text",
+					"store": true,
+					"fielddata": true
+				}{{- if eq $msg.NumField $field.Index}} {{- else}}, {{- end}}
+				{{- else}}
+				"{{ ucdown $field.Name }}":{
+					"type":"keyword"
+				}{{- if eq $msg.NumField $field.Index}} {{- else}}, {{- end}}
+				{{- end}}
+			{{- end}}
+			}
+		}
+	}
+}'
+
+{{- end}}
+
+{{- end}}
 {{- end}}
 
 `
