@@ -143,6 +143,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 			requiredType := ""
 			tagField := ""
 			fullText := false
+			errorDescription := "this field is required"
 
 			// get options in field
 			for _, vOptField := range newFieldOptions {
@@ -167,6 +168,8 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 					if res, err := strconv.Atoi(vOptField.Value); err == nil && res == 1 {
 						fullText = true
 					}
+				case "errorDesc":
+					errorDescription = vOptField.Value
 				}
 			}
 			newField = append(newField, Field{
@@ -185,6 +188,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 				Tag:            tagField,
 				FullText:       fullText,
 				Index:          kMessageField + 1,
+				ErrorDesc:      errorDescription,
 			})
 		}
 

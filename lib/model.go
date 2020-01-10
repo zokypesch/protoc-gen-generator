@@ -71,6 +71,7 @@ type Field struct {
 	RequiredType   string
 	Tag            string
 	FullText       bool
+	ErrorDesc      string
 }
 
 // Data for struct list of data

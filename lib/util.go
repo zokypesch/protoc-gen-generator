@@ -115,6 +115,8 @@ func getStringFromOptCode(param string) string {
 		return "fulltext"
 	case "50064":
 		return "elastic"
+	case "50065":
+		return "errorDesc"
 	}
 	return ""
 }

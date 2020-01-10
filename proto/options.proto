@@ -19,4 +19,5 @@ extend google.protobuf.FieldOptions {
     bool required = 50060;
     string required_type = 50061;
     bool fulltext = 50063;
+    string errDesc = 50065;
 }

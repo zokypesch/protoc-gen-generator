@@ -11,7 +11,9 @@ type Config struct {
 	ServiceName      string   'envconfig:"SERVICE_NAME" default:"enterprise-app-{{ ucdown .GoPackage }}"'
 	PORT             string   'envconfig:"PORT" default:"80"'
 	GRPCPORT         string   'envconfig:"GRPC_PORT" default:"8080"'
-	// ESAddress        string   'envconfig:"ES_FEC_APPS" default:"http://fec-ticketing-stag-es.statefulset.svc.cluster.local:9200"'
+	{{- if .Elastic }}
+	ESAddress        string   'envconfig:"ES_FEC_APPS" default:"http://fec-ticketing-stag-es.statefulset.svc.cluster.local:9200"'
+	{{- end}}
 	PREFIX           string   'envconfig:"PREFIX" default:"enterprise{{ ucdown .GoPackage }}"'
 	INTERNALPASSWORD string   'envconfig:"INTERNAL_PASSWORD" default:"INTERNALAPIPASSWORD"'
 }

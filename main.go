@@ -10,25 +10,6 @@ import (
 
 func main() {
 	// err := lib.NewFullMethodsGenerator().Generate()
-	// list := []lib.List{
-	// 	template.ListFullMethod,
-	// 	template.ListTypeScript,
-	// 	template.ListTypeScriptScreen,
-	// 	template.ListModelGolang,
-	// 	template.ListRepositoryGolang,
-	// 	template.ListMasterRepoGolang,
-	// 	template.ListHandler,
-	// 	template.ListConfig,
-	// 	template.ListYaml, //disable for reason
-	// 	template.ListEnv,  //disable for reason
-	// 	template.ListService,
-	// 	// template.ListCoreValidation,
-	// 	template.ListMain, //disable for reason
-	// 	template.ListToml, //disable for reason
-	// 	// template.ListMainv2, //non-disable for reason
-	// 	// template.ListTomlv2, //disable for reason
-	// }
-
 	list := []lib.List{
 		template.ListFullMethod,
 		template.ListTypeScript,
@@ -38,11 +19,29 @@ func main() {
 		template.ListMasterRepoGolang,
 		template.ListHandler,
 		template.ListConfig,
+		template.ListYaml,
+		template.ListEnv,
 		template.ListService,
-		template.ListMainv2,  //non-disable for reason
-		template.ListTomlv2,  //disable for reason
-		template.ListElastic, //disable for reason
+		template.ListMain,
+		template.ListToml,
+		template.ListElastic,
 	}
+
+	// list := []lib.List{
+	// 	template.ListFullMethod,
+	// 	template.ListTypeScript,
+	// 	template.ListTypeScriptScreen,
+	// 	template.ListModelGolang,
+	// 	template.ListRepositoryGolang,
+	// 	template.ListMasterRepoGolang,
+	// 	template.ListHandler,
+	// 	template.ListConfig,
+	// 	template.ListService,
+	// 	template.ListMainv2,
+	// 	template.ListTomlv2,
+	// 	template.ListElastic,
+	// 	template.ListTypeScriptValidation,
+	// }
 	res, err := lib.NewMaster(list).Generate()
 
 	if err != nil {
