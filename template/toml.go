@@ -9,7 +9,8 @@ required = [
   "github.com/satori/go.uuid",
   "github.com/gin-gonic/gin",
   "github.com/grpc/grpc-go/status",
-  "google.golang.org/grpc/reflection"
+  "google.golang.org/grpc/reflection",
+  "github.com/prometheus/client_golang/prometheus/promhttp"
 ]
 
 [[constraint]]
