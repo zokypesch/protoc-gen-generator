@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"fmt"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
@@ -179,6 +180,11 @@ func writeResponseWithList(w io.Writer, response *plugin.CodeGeneratorResponse, 
 		content = strings.Replace(content, "'", "`", -1)
 	}
 
+	foundIndex := strings.Index(location, "%")
+	if foundIndex > -1 {
+		location = fmt.Sprintf(location, strings.ToLower(datas.Services[0].Name))
+	}
+	
 	if _, err := os.Stat(location); os.IsNotExist(err) {
 		os.Mkdir(location, 0755)
 	}

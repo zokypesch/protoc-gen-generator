@@ -15,7 +15,7 @@ import (
 	"{{ .Src }}/config"
 	// core "{{ .Src }}/core"
 	// model "{{ .Src }}/model"
-	repo "{{ .Src }}/repo"
+	{{ ucdown (getFirstService .Services).Name }} "{{ .Src }}/{{ ucdown (getFirstService .Services).Name }}"
 	sv "{{ .Src }}/handler"
 	"gitlab.com/ruangguru/source/shared-lib/go/conn/mysql"
 	logInt "gitlab.com/ruangguru/source/shared-lib/go/middleware/grpc/logger"
@@ -35,7 +35,7 @@ func main() {
 
 	db := mysql.Init(cfg.PREFIX)
 
-	masterRepo := repo.NewMasterRepoService(db)
+	masterRepo := {{ ucdown (getFirstService .Services).Name }}.NewMasterRepoService(db)
 {{- range $msg := .Messages }}
 {{- if $msg.IsElastic }}
 	es{{ ucfirst $msg.Name }} := core.NewEsCore(cfg.ESAddress, "{{ $msg.Name }}ing", model.Mapping{{ ucfirst $msg.Name }}, "{{ $msg.Name }}")
@@ -43,9 +43,9 @@ func main() {
 {{- end}}
 
 {{- if .Elastic }}
-	masterService := sv.New{{ ucfirst (getFirstService .Services).Name }}Service(masterRepo,{{ .MessageAll }})
+	masterService := {{ ucdown (getFirstService .Services).Name }}.New{{ ucfirst (getFirstService .Services).Name }}Service(masterRepo,{{ .MessageAll }})
 {{- else}}
-	masterService := sv.New{{ ucfirst (getFirstService .Services).Name }}Service(masterRepo)
+	masterService := {{ ucdown (getFirstService .Services).Name }}.New{{ ucfirst (getFirstService .Services).Name }}Service(masterRepo)
 {{- end}}
 
 	handler := sv.New{{ ucfirst (getFirstService .Services).Name }}(masterService)
@@ -53,6 +53,7 @@ func main() {
 	svc := morse.NewService(
 		morse.GRPCPort(cfg.GRPCPORT),
 		morse.RESTPort(cfg.PORT),
+		morse.EnablePrometheus(),
 	)
 
 	loggerInt := logInt.UnaryServerInterceptor()

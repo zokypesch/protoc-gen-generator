@@ -13,18 +13,18 @@ import  (
 	"context"
 	empty "github.com/golang/protobuf/ptypes/empty"
 	validator "github.com/go-playground/validator"
-	model "{{ .Src }}/model"
+	domain "{{ .Src }}/{{ ucdown (getFirstService .Services).Name }}"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 {{- range $service := .Services }}
 type {{ ucfirst $service.Name }} struct{
-	svc *{{ ucfirst $service.Name }}Service
+	svc *domain.{{ ucfirst $service.Name }}Service
 	validate *validator.Validate
 }
 
-func New{{ ucfirst $service.Name }}(svc *{{ ucfirst $service.Name }}Service) *{{ ucfirst $service.Name }} {
+func New{{ ucfirst $service.Name }}(svc *domain.{{ ucfirst $service.Name }}Service) *{{ ucfirst $service.Name }} {
 	validate := validator.New()
 	return &{{ ucfirst $service.Name }}{{ unescape "{" }}svc, validate{{ unescape "}" }}
 }
@@ -39,7 +39,7 @@ func (handler *{{ ucfirst $service.Name }}) {{ ucfirst $method.Name }}(ctx conte
 
 {{- if eq $method.Input "empty"}}
 {{- else}}
-	model := model.{{ ucfirst $method.Input }}{}
+	model := domain.{{ ucfirst $method.Input }}{}
 
 {{- range $field := $method.InputMessage.Fields }}
 {{- if $field.RequiredOption}}

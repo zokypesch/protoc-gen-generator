@@ -11,7 +11,7 @@ var tmplMainGov2 = `package main
 import (
 	"github.com/jinzhu/gorm"
 	"log"
-	repo "{{ .Src }}/repo"
+	{{ ucdown (getFirstService .Services).Name }} "{{ .Src }}/{{ ucdown (getFirstService .Services).Name }}"
 	sv "{{ .Src }}/handler"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -32,7 +32,6 @@ import (
 	"fmt"
 	{{- if .Elastic }}
 	core "{{ .Src }}/core"
-	model "{{ .Src }}/model"
 	config "{{ .Src }}/config"
 	{{- end}}
 )
@@ -96,18 +95,18 @@ func main() {
 		log.Fatal(errList)
 	}
 
-	masterRepo := repo.NewMasterRepoService(db)
+	masterRepo := {{ ucdown (getFirstService .Services).Name }}.NewMasterRepoService(db)
 	
 {{- range $msg := .Messages }}
 {{- if $msg.IsElastic }}
-	es{{ ucfirst $msg.Name }} := core.NewEsCore(cfg.ESAddress, "{{ $msg.Name }}ing", model.Mapping{{ ucfirst $msg.Name }}, "{{ $msg.Name }}")
+	es{{ ucfirst $msg.Name }} := core.NewEsCore(cfg.ESAddress, "{{ $msg.Name }}ing", {{ ucdown (getFirstService .Services).Name }}.Mapping{{ ucfirst $msg.Name }}, "{{ $msg.Name }}")
 {{- end}}
 {{- end}}
 
 {{- if .Elastic }}
-	masterService := sv.New{{ ucfirst (getFirstService .Services).Name }}Service(masterRepo,{{ .MessageAll }})
+	masterService := {{ ucdown (getFirstService .Services).Name }}.New{{ ucfirst (getFirstService .Services).Name }}Service(masterRepo,{{ .MessageAll }})
 {{- else}}
-	masterService := sv.New{{ ucfirst (getFirstService .Services).Name }}Service(masterRepo)
+	masterService := {{ ucdown (getFirstService .Services).Name }}.New{{ ucfirst (getFirstService .Services).Name }}Service(masterRepo)
 {{- end}}
 	
 	handler := sv.New{{ ucfirst (getFirstService .Services).Name }}(masterService)
