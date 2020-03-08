@@ -33,6 +33,7 @@ import (
 	{{- if .Elastic }}
 	core "{{ .Src }}/core"
 	config "{{ .Src }}/config"
+	domain "{{ .Src }}/{{ ucdown (getFirstService .Services).Name }}"
 	{{- end}}
 )
 
@@ -99,7 +100,7 @@ func main() {
 	
 {{- range $msg := .Messages }}
 {{- if $msg.IsElastic }}
-	es{{ ucfirst $msg.Name }} := core.NewEsCore(cfg.ESAddress, "{{ $msg.Name }}ing", {{ ucdown (getFirstService .Services).Name }}.Mapping{{ ucfirst $msg.Name }}, "{{ $msg.Name }}")
+	es{{ ucfirst $msg.Name }} := core.NewEsCore(cfg.ESAddress, "{{ $msg.Name }}ing", domain.Mapping{{ ucfirst $msg.Name }}, "{{ $msg.Name }}")
 {{- end}}
 {{- end}}
 

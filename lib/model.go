@@ -45,6 +45,7 @@ type Message struct {
 	NumField       int
 	Fields         []Field
 	Options        []*Option
+	Domain         string
 }
 
 // Enum for messaging enum

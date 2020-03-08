@@ -27,6 +27,7 @@ func main() {
 	// 	template.ListElastic,
 	// }
 
+	log.Println("starting generate")
 	list := []lib.List{
 		template.ListFullMethod,
 		template.ListTypeScript,
