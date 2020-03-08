@@ -275,7 +275,6 @@ func (es *ESCore) GetByID(ctx context.Context, ID string) (*elastic.GetResult, e
 func (es *ESCore) GetClient() *elastic.Client {
 	return es.client
 }
-
 `
 
 var ListElastic = lib.List{
