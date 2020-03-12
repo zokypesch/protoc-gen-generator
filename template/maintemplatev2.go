@@ -44,7 +44,7 @@ func runHTTP() error {
 
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
-	err := pb.RegisterSimpleHandlerFromEndpoint(ctx, mux, "localhost:8080", opts)
+	err := pb.Register{{ ucfirst (getFirstService .Services).Name }}HandlerFromEndpoint(ctx, mux, "localhost:8080", opts)
 	if err != nil {
 		return err
 	}
@@ -63,8 +63,8 @@ func CustomLogger(code codes.Code) logrus.Level {
 }
 
 func InitDB(address string, dbName string) *gorm.DB {
-	dbUser := "root"
-	dbPass := "ErGeRj45"
+	dbUser := "localhost"
+	dbPass := ""
 	dbEndpoint := address
 	dbPort := "3306"
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbUser, dbPass, dbEndpoint, dbPort, dbName)
@@ -89,7 +89,7 @@ func main() {
 	cfg := config.Get()
 	{{- end}}
 
-	db := InitDB("fec-ticketing-stag-mysql.statefulset.svc.cluster.local", "ticketing")
+	db := InitDB("localhost", "ticketing")
 	lis, errList := net.Listen("tcp", ":8080")
 
 	if errList != nil {

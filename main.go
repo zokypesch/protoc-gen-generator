@@ -28,20 +28,33 @@ func main() {
 	// }
 
 	log.Println("starting generate")
+	// list := []lib.List{
+	// 	template.ListFullMethod,
+	// 	template.ListTypeScript,
+	// 	template.ListTypeScriptScreen,
+	// 	template.ListModelGolang,
+	// 	template.ListRepositoryGolang,
+	// 	template.ListMasterRepoGolang,
+	// 	template.ListHandler,
+	// 	template.ListConfig,
+	// 	template.ListService,
+	// 	template.ListMainv2,
+	// 	template.ListTomlv2,
+	// 	template.ListElastic,
+	// 	template.ListTypeScriptValidation,
+	// }
+
+	// v3 for prakerja
 	list := []lib.List{
 		template.ListFullMethod,
-		template.ListTypeScript,
-		template.ListTypeScriptScreen,
 		template.ListModelGolang,
 		template.ListRepositoryGolang,
 		template.ListMasterRepoGolang,
 		template.ListHandler,
 		template.ListConfig,
 		template.ListService,
-		template.ListMainv2,
+		template.ListMainv3,
 		template.ListTomlv2,
-		template.ListElastic,
-		template.ListTypeScriptValidation,
 	}
 	res, err := lib.NewMaster(list).Generate()
 

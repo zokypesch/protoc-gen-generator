@@ -7,6 +7,10 @@ var tmplFullMethod = `
 // source: {{ .FileName }}
 package {{ .GoPackage }}
 
+import  (
+	core "github.com/zokypesch/proto-lib/core"
+)
+
 const (
 {{- range $service := .Services }}
 {{- range $method := $service.Methods }}
@@ -24,6 +28,15 @@ var (
 {{- end}}
 	{{ "}" }}
 )
+
+func InitCallGRPC() {
+{{- range $service := .Services }}
+{{- range $method := $service.Methods }}
+	forward_{{ $service.Name }}_{{ $method.Name }}_0 = core.LocalForward
+{{- end}}
+{{- end}}
+	runtime.HTTPError = core.CustomHTTPError
+}
 `
 
 var ListFullMethod = lib.List{
