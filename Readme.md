@@ -196,9 +196,9 @@ protoc --go_out=. proto/options.proto
 
 # notes for using decorator
 // Query count
-	queryCount := r.db.Select("count(id) count").Model(Price{})
-	decorCount := decorator.NewServiceDecorator(queryCount, q)
-	queryCount, _ = decorCount.AppendWhere()
-	if err = queryCount.Count(&pagingResp.Total).Error; err != nil {
-		return nil, nil, err
-	}
+queryCount := r.db.Select("count(id) count").Model(Price{})
+decorCount := decorator.NewServiceDecorator(queryCount, q)
+queryCount, _ = decorCount.AppendWhere()
+if err = queryCount.Count(&pagingResp.Total).Error; err != nil {
+    return nil, nil, err
+}
