@@ -36,6 +36,8 @@ func grpcTypeToGo(param string) string {
 		return "int32"
 	case "TYPE_BOOL":
 		return "bool"
+	case "TYPE_DOUBLE":
+		return "float64"
 	default:
 		return "string"
 	}
