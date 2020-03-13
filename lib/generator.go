@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -8,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-	"fmt"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
@@ -156,9 +156,6 @@ func writeResponseWithList(w io.Writer, response *plugin.CodeGeneratorResponse, 
 			os.Mkdir("./grpc/pb/"+pkgName, 0755)
 		}
 
-		// _, err = w.Write(output)
-		// return fileName, err
-
 	}
 
 	if list.Lang == "go" {
@@ -167,6 +164,13 @@ func writeResponseWithList(w io.Writer, response *plugin.CodeGeneratorResponse, 
 		fileName = "service.yaml"
 	} else if list.Lang == "toml" {
 		fileName = "Gopkg.toml"
+
+	} else if list.Lang == "docker" {
+		fileName = "Dockerfile"
+
+	} else if list.Lang == "readme" {
+		fileName = "Readme.md"
+
 	} else if list.Lang == "elastic" {
 		if !datas.Elastic {
 			return "", nil
@@ -184,7 +188,7 @@ func writeResponseWithList(w io.Writer, response *plugin.CodeGeneratorResponse, 
 	if foundIndex > -1 {
 		location = fmt.Sprintf(location, strings.ToLower(datas.Services[0].Name))
 	}
-	
+
 	if _, err := os.Stat(location); os.IsNotExist(err) {
 		os.Mkdir(location, 0755)
 	}

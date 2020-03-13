@@ -55,6 +55,8 @@ func main() {
 		template.ListService,
 		template.ListMainv3,
 		template.ListTomlv2,
+		template.ListDocker,
+		template.ListReadme,
 	}
 	res, err := lib.NewMaster(list).Generate()
 
