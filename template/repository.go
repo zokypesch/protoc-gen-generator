@@ -20,8 +20,8 @@ type {{ ucfirst $msg.Name }}Repository struct {
 	db *gorm.DB
 }
 
-// {{ ucfirst $msg.Name }}Service for interfacing repository
-type {{ ucfirst $msg.Name }}Service interface {
+// {{ ucfirst $msg.Name }}RepoService for interfacing repository
+type {{ ucfirst $msg.Name }}RepoService interface {
 	GetBy{{ $msg.PrimaryKeyName }}(payload *{{ ucfirst $msg.Name }}) (*{{ucfirst $msg.Name}}, error)
 	GetAll(payload *{{ ucfirst $msg.Name }}) ([]{{ ucfirst $msg.Name }}, error)
 	Create(payload *{{ ucfirst $msg.Name }}) (*{{ucfirst $msg.Name}}, error)
@@ -30,10 +30,10 @@ type {{ ucfirst $msg.Name }}Service interface {
 }
 
 // {{ ucfirst $msg.Name }} for repository singleton
-var {{ $msg.Name }}Repo {{ ucfirst $msg.Name }}Service
+var {{ $msg.Name }}Repo {{ ucfirst $msg.Name }}RepoService
 
-// New{{ ucfirst $msg.Name }}Service for new repository service
-func New{{ ucfirst $msg.Name }}Service(db *gorm.DB) {{ ucfirst $msg.Name }}Service {
+// New{{ ucfirst $msg.Name }}RepoService for new repository service
+func New{{ ucfirst $msg.Name }}RepoService(db *gorm.DB) {{ ucfirst $msg.Name }}RepoService {
 	if {{ $msg.Name }}Repo == nil {
 		{{ $msg.Name }}Repo = &{{ ucfirst $msg.Name }}Repository{
 			db,
@@ -56,7 +56,7 @@ func (repo *{{ ucfirst $msg.Name }}Repository) GetAll(payload *{{ ucfirst $msg.N
 	page := 1
 	offset := (int(page) - 1) * limit
 
-	var data []{{ ucfirst $msg.Name }} 
+	var data []{{ ucfirst $msg.Name }}
 	db := repo.db.Where(payload).Offset(offset).Limit(limit).Find(&data)
 
 	return data, db.Error

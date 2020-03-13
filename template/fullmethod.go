@@ -9,6 +9,7 @@ package {{ .GoPackage }}
 
 import  (
 	core "github.com/zokypesch/proto-lib/core"
+	runtime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 )
 
 const (
@@ -29,13 +30,15 @@ var (
 	{{ "}" }}
 )
 
-func InitCallGRPC() {
+func InitCallGRPC() error {
 {{- range $service := .Services }}
 {{- range $method := $service.Methods }}
 	forward_{{ $service.Name }}_{{ $method.Name }}_0 = core.LocalForward
 {{- end}}
 {{- end}}
 	runtime.HTTPError = core.CustomHTTPError
+
+	return nil
 }
 `
 

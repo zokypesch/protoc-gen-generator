@@ -43,7 +43,10 @@ func (handler *{{ ucfirst $service.Name }}) {{ ucfirst $method.Name }}(ctx conte
 
 {{- range $field := $method.InputMessage.Fields }}
 {{- if $field.RequiredOption}}
+{{- if eq $field.TypeDataGo "time.Time"}}
+{{- else }}
 	model.{{ ucfirst $field.Name }} = in.{{ ucfirst $field.Name }}
+{{- end}}
 {{- end}}
 {{- end}}
 

@@ -29,7 +29,7 @@ func main() {
 
 	cfg := config.Get()
 
-	db := core.InitDB("localhost", "{{ ucdown (getFirstService .Services).Name }}", "root", "", 3306)
+	db := core.InitDB(cfg.DBAddress, cfg.DBName, cfg.DBUser, cfg.DBPassword, cfg.DBPort)
 	lis, errList := net.Listen("tcp", fmt.Sprintf(":%s", cfg.GRPCPORT))
 
 	if errList != nil {
@@ -53,7 +53,6 @@ func main() {
 	handler := sv.New{{ ucfirst (getFirstService .Services).Name }}(masterService)
 	server := core.RegisterGRPC([]string{}, cfg.INTERNALPASSWORD)
 
-	pb.InitCallGRPC()
 	pb.Register{{ ucfirst (getFirstService .Services).Name }}Server(server, handler)
 
 	go func() {{ unescape "{" }}
@@ -64,11 +63,7 @@ func main() {
 
 	log.Println("starting server")
 
-	if err := runHTTP(); err != nil {
-		log.Fatal(err)
-	}
-
-	if err := core.RunHTTP(Init, pb.Register{{ ucfirst (getFirstService .Services).Name }}HandlerFromEndpoint, "localhost", cfg.GRPCPORT, cfg.PORT); err != nil {
+	if err := core.RunHTTP(pb.InitCallGRPC, pb.Register{{ ucfirst (getFirstService .Services).Name }}HandlerFromEndpoint, cfg.GRPCClient, cfg.GRPCPORT, cfg.PORT); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -77,7 +72,7 @@ func main() {
 
 var ListMainv3 = lib.List{
 	FileType: ".main.go",
-	Template: tmplMainGov2,
+	Template: tmplMainGov3,
 	Location: "./",
 	Lang:     "go",
 }

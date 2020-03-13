@@ -87,4 +87,5 @@ type Data struct {
 	MessageAll string
 	Enums      []*Enum
 	Elastic    bool
+	TimeStamp  bool
 }

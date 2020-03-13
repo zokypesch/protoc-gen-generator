@@ -68,6 +68,8 @@ func (g *Operations) setCurrentList(index int) {
 	g.CurrentList = g.List[index]
 }
 
+var useTimeStampIO bool
+
 // func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, listTemp List) (*plugin.CodeGeneratorResponse_File, error) {
 func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, listTemp List) (*plugin.CodeGeneratorResponse_File, string, Data, error) {
 	if protoFile.Name == nil {
@@ -93,6 +95,8 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 	messageAllEsSvc := ""
 	indexMsgEs := 0
 	useElastic := false
+	useTimeStamp := false
+	useTimeStampIO = false
 
 	// get message in proto
 	for iMType, messageType := range protoFile.MessageType {
@@ -121,6 +125,10 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 				onTypeComb := strings.Split(messageField.GetTypeName(), ".")
 				typeData = ucDown(onTypeComb[len(onTypeComb)-1:][0])
 				typeDataGo = ucFirst(onTypeComb[len(onTypeComb)-1:][0])
+				if typeDataGo == "Timestamp" {
+					typeDataGo = "time.Time"
+					useTimeStamp = true
+				}
 				originalType = typeDataGo
 			} else {
 				typeData = grpcTypeToTs(typeData)
@@ -271,6 +279,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 	datas.Enums = enums
 	datas.NumMessage = len(newMessage)
 	datas.MessageAll = messageAllEs
+	datas.TimeStamp = useTimeStamp
 
 	// get service in protofile
 	for kSvc, svc := range protoFile.Service {
@@ -416,8 +425,15 @@ func getIO(input Message, output Message) Message {
 				newField := Field(v)
 				newField.Index = index
 
+				if newField.TypeDataGo == "Timestamp" {
+					newField.TypeDataGo = "time.Time"
+					useTimeStampIO = true
+				}
+
 				fields = append(fields, newField)
 				index++
+			} else {
+				// DO SOMETHING
 			}
 		}
 	}

@@ -16,6 +16,9 @@ import  (
 	{{- if .Elastic }}
 	core "{{ .Src }}/core"
 	{{- end}}
+	{{- if .TimeStamp }}
+	ptypes "github.com/golang/protobuf/ptypes"
+	{{- end}}
 )
 
 {{- range $service := .Services }}
@@ -67,7 +70,15 @@ func (svc *{{ ucfirst $service.Name }}Service) {{ ucfirst $method.Name }}(ctx co
 	model := &{{ ucfirst $method.AgregatorMessage.Name }}{}
 {{- range $field := $method.InputWithAgregator.Fields }}
 {{- if eq $field.IgnoreGorm false}}
+{{- if eq $field.TypeDataGo "time.Time"}}
+	time{{ ucfirst $field.Name }}, errTime{{ ucfirst $field.Name }} := ptypes.Timestamp(in.{{ ucfirst $field.Name }})
+
+	if errTime{{ ucfirst $field.Name }} == nil {
+		model.{{ ucfirst $field.Name }} = time{{ ucfirst $field.Name }}
+	}
+{{- else }}
 	model.{{ ucfirst $field.Name }} = in.{{ ucfirst $field.Name }}
+{{- end}}
 {{- end}}
 {{- end}}
 {{- if eq $method.AgregatorFunction "GetAll"}}
@@ -81,7 +92,17 @@ func (svc *{{ ucfirst $service.Name }}Service) {{ ucfirst $method.Name }}(ctx co
 {{- else}}
 {{- range $field := $method.IO.Fields }}
 {{- if eq $field.IgnoreGorm false }}
+
+{{- if eq $field.TypeDataGo "time.Time"}}
+	protoTimeResp{{ ucfirst $field.Name }}, errProtoTimeResp{{ ucfirst $field.Name }} := ptypes.TimestampProto(res.{{ ucfirst $field.Name }})
+
+	if errProtoTimeResp{{ ucfirst $field.Name }} == nil {
+		resp.{{ ucfirst $field.Name }} = protoTimeResp{{ ucfirst $field.Name }}
+	}
+{{- else }}
 	resp.{{ ucfirst $field.Name }} = res.{{ ucfirst $field.Name }}
+{{- end}}
+
 {{- end}}
 {{- end}}
 {{- end}}

@@ -16,7 +16,7 @@ import (
 type MasterRepository struct {
 {{- range $msg := .Messages }}
 {{- if $msg.IsRepository}} 
-	{{ ucfirst $msg.Name }}		{{ ucfirst $msg.Name }}Service
+	{{ ucfirst $msg.Name }}		{{ ucfirst $msg.Name }}RepoService
 {{- end}}
 {{- end}}
 }
@@ -28,7 +28,7 @@ func NewMasterRepoService(db *gorm.DB) *MasterRepository {
 		masterRepo = &MasterRepository{
 		{{- range $msg := .Messages }}
 		{{- if $msg.IsRepository}} 
-			{{ ucfirst $msg.Name }}:		New{{ ucfirst $msg.Name }}Service(db),
+			{{ ucfirst $msg.Name }}:		New{{ ucfirst $msg.Name }}RepoService(db),
 		{{- end}}
 		{{- end}}
 		}

@@ -16,6 +16,14 @@ type Config struct {
 	{{- end}}
 	PREFIX           string   'envconfig:"PREFIX" default:"enterprise{{ ucdown .GoPackage }}"'
 	INTERNALPASSWORD string   'envconfig:"INTERNAL_PASSWORD" default:"INTERNALAPIPASSWORD"'
+	// DB Information
+	DBAddress 		 string   'envconfig:"DBADDRESS" default:"localhost"'
+	DBName 			 string   'envconfig:"DBNAME" default:"test"'
+	DBUser 			 string   'envconfig:"DBUSER" default:"root"'
+	DBPassword 		 string   'envconfig:"DBPASSWORD" default:""'
+	DBPort 		 	 int   	  'envconfig:"DBPORT" default:"3306"'
+	// GRPC Gateway Information
+	GRPCClient		 string   'envconfig:"GRPCClient" default:"localhost"'
 }
 
 // singleton of data

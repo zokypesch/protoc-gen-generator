@@ -8,6 +8,10 @@ var tmplModelGo = `package {{ ucdown (getFirstService .Services).Name }}
 // source: {{ .FileName }}_{{ .GoPackage }}
 // File Location: {{ ucfirst (getFirstService .Services).Name }}.model.go
 
+{{- if .TimeStamp}}
+import "time"
+{{- end}}
+
 {{- range $msg := .Messages }}
 // {{ ucfirst $msg.Name }} for struct info
 type {{ ucfirst $msg.Name }} struct {
