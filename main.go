@@ -57,6 +57,9 @@ func main() {
 		template.ListTomlv2,
 		template.ListDocker,
 		template.ListReadme,
+		template.ListTypeScript,
+		template.ListTypeScriptScreen,
+		template.ListTypeScriptValidation,
 	}
 	res, err := lib.NewMaster(list).Generate()
 
