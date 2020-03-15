@@ -86,8 +86,15 @@ func (svc *{{ ucfirst $service.Name }}Service) {{ ucfirst $method.Name }}(ctx co
 {{- end}}
 {{- end}}
 {{- end}}
+{{- if eq $method.AgregatorFunction "GetAll"}}
+{{- if $method.IsPageLimitFound}}
+	res, err := svc.repo.{{ ucfirst $method.AgregatorMessage.Name }}.{{ $method.AgregatorFunction }}(model, in.Page, in.PerPage)
+{{- else}}
+	res, err := svc.repo.{{ ucfirst $method.AgregatorMessage.Name }}.{{ $method.AgregatorFunction }}(model, 1, 1000)
+{{- end }}
+{{- else}}
 	res, err := svc.repo.{{ ucfirst $method.AgregatorMessage.Name }}.{{ $method.AgregatorFunction }}(model)
-
+{{- end }}
 	resp := &pb.{{ ucfirst $method.Output }}{}
 
 {{- if eq $method.AgregatorFunction "GetAll"}}

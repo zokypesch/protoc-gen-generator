@@ -325,6 +325,8 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 			agregatorGetByPrimary := ""
 			agregatorFunction := ""
 			isGetAllMessage := false
+			isPageParamFound := false
+			isLimitParamFound := false
 
 			// get options in service
 			for _, vOpt := range newOptions {
@@ -375,6 +377,14 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 				}
 			}
 
+			for _, vAllMsg := range inputMessage.Fields {
+				if strings.ToLower(vAllMsg.Name) == "page" && isAgregator {
+					isPageParamFound = true
+				} else if strings.ToLower(vAllMsg.Name) == "perpage" && isAgregator {
+					isLimitParamFound = true
+				}
+			}
+
 			methods[i] = &Method{
 				Name:                  ucFirst(*method.Name),
 				Input:                 typeInputMethod,
@@ -391,6 +401,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 				InputWithAgregator:    inputWithAgregator,
 				IsGetAllMessage:       isGetAllMessage,
 				AgregatorGetByPrimary: agregatorGetByPrimary,
+				IsPageLimitFound:      isPageParamFound && isLimitParamFound,
 			}
 			isGetAllMessage = false
 		}

@@ -27,6 +27,7 @@ type Method struct {
 	AgregatorGetByPrimary string
 	InputWithAgregator    Message
 	IsGetAllMessage       bool
+	IsPageLimitFound      bool
 }
 
 // Option for optional
