@@ -43,7 +43,7 @@ func (handler *{{ ucfirst $service.Name }}) {{ ucfirst $method.Name }}(ctx conte
 {{- else}}
 	model := domain.{{ ucfirst $method.Input }}{}
 
-{{- range $field := $method.InputMessage.Fields }}
+{{- range $field := $method.InputWithAgregator.Fields }}
 {{- if $field.RequiredOption}}
 {{- if eq $field.TypeDataGo "time.Time"}}
 {{- else }}
@@ -53,7 +53,7 @@ func (handler *{{ ucfirst $service.Name }}) {{ ucfirst $method.Name }}(ctx conte
 {{- end}}
 
 	if err := handler.validate.Struct(model); err != nil {
-		return &pb.{{ ucfirst $method.Output }}{}, status.Errorf(codes.PermissionDenied, err.Error())
+		return &pb.{{ ucfirst $method.Output }}{}, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 {{- end}}
 	return handler.svc.{{ ucfirst $method.Name }}(ctx, in)
