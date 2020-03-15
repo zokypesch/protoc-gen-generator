@@ -45,7 +45,7 @@ func New{{ ucfirst $msg.Name }}RepoService(db *gorm.DB) {{ ucfirst $msg.Name }}R
 // GetBy{{ $msg.PrimaryKeyName }} for get by primarykey
 func (repo *{{ ucfirst $msg.Name }}Repository) GetBy{{ $msg.PrimaryKeyName }}(payload *{{ ucfirst $msg.Name }}) (*{{ ucfirst $msg.Name }}, error) {
 	var data {{ ucfirst $msg.Name }}
-	db := repo.db.Where("{{ underscore $msg.PrimaryKeyName }} = ?", payload.{{ ucfirst $msg.PrimaryKeyName }}).Find(&data)
+	db := repo.db.Set("gorm:auto_preload", true).Where("{{ underscore $msg.PrimaryKeyName }} = ?", payload.{{ ucfirst $msg.PrimaryKeyName }}).Find(&data)
 
 	return &data, db.Error
 }
