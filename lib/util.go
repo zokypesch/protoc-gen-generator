@@ -38,6 +38,8 @@ func grpcTypeToGo(param string) string {
 		return "bool"
 	case "TYPE_DOUBLE":
 		return "float64"
+	case "TYPE_FLOAT":
+		return "float32"
 	default:
 		return "string"
 	}
@@ -119,6 +121,10 @@ func getStringFromOptCode(param string) string {
 		return "elastic"
 	case "50065":
 		return "errorDesc"
+	case "50066":
+		return "foreignKey"
+	case "50067":
+		return "whitelist"
 	}
 	return ""
 }

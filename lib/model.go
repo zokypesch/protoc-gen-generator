@@ -12,19 +12,21 @@ type Service struct {
 
 // Method list of method inside service
 type Method struct {
-	Name               string
-	Input              string
-	Output             string
-	Options            []*Option
-	HttpMode           string
-	URLPath            string
-	InputMessage       Message
-	OutputMessage      Message
-	IO                 Message
-	IsAgregator        bool
-	AgregatorMessage   Message
-	AgregatorFunction  string
-	InputWithAgregator Message
+	Name                  string
+	Input                 string
+	Output                string
+	Options               []*Option
+	HttpMode              string
+	URLPath               string
+	InputMessage          Message
+	OutputMessage         Message
+	IO                    Message
+	IsAgregator           bool
+	AgregatorMessage      Message
+	AgregatorFunction     string
+	AgregatorGetByPrimary string
+	InputWithAgregator    Message
+	IsGetAllMessage       bool
 }
 
 // Option for optional
@@ -43,7 +45,7 @@ type Message struct {
 	PrimaryKeyName string
 	PrimaryKeyType string
 	NumField       int
-	Fields         []Field
+	Fields         []*Field
 	Options        []*Option
 	Domain         string
 }
@@ -73,19 +75,30 @@ type Field struct {
 	Tag            string
 	FullText       bool
 	ErrorDesc      string
+	IsFieldMessage bool
+	MessageTo      Message
+	MessageToName  string
 }
 
 // Data for struct list of data
 type Data struct {
-	FileName   string
-	Src        string
-	GoPackage  string
-	Package    string
-	Services   []Service
-	Messages   []Message
-	NumMessage int
-	MessageAll string
-	Enums      []*Enum
-	Elastic    bool
-	TimeStamp  bool
+	FileName      string
+	Src           string
+	GoPackage     string
+	Package       string
+	Services      []Service
+	Messages      []Message
+	NumMessage    int
+	MessageAll    string
+	Enums         []*Enum
+	Elastic       bool
+	TimeStamp     bool
+	UseEmptyProto bool
+	WhiteList     []WhitelistOpt
+}
+
+// WhitelistOpt for the struct whitelist
+type WhitelistOpt struct {
+	Name        string
+	ServiceName string
 }

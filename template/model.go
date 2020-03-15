@@ -16,7 +16,7 @@ import "time"
 // {{ ucfirst $msg.Name }} for struct info
 type {{ ucfirst $msg.Name }} struct {
 {{- range $field := $msg.Fields }}
-	{{ $field.NameGo }}			{{ $field.TypeDataGo }} {{- if eq $field.Tag "" }} 'decorator:"EQUAL"' {{- else}} '{{ unescape $field.Tag }} decorator:"EQUAL"' {{- end}}
+	{{ $field.NameGo }}			{{ $field.TypeDataGo }} {{- if eq $field.Tag "" }} {{- else}} '{{ unescape $field.Tag }}' {{- end}}
 {{- end}}
 }
 {{- end}}

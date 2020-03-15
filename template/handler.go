@@ -11,7 +11,9 @@ var tmplHandler = `package handler
 import  (
 	pb "{{ .Src }}/grpc/pb/{{ .GoPackage }}"
 	"context"
+	{{- if .UseEmptyProto}}
 	empty "github.com/golang/protobuf/ptypes/empty"
+	{{- end}}
 	validator "github.com/go-playground/validator"
 	domain "{{ .Src }}/{{ ucdown (getFirstService .Services).Name }}"
 	"google.golang.org/grpc/codes"

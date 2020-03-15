@@ -195,6 +195,16 @@ func writeResponseWithList(w io.Writer, response *plugin.CodeGeneratorResponse, 
 
 	fileDestPrefix, _ := filepath.Abs(location + fileName)
 
+	// check do not replace
+	dat, errDoNot := ioutil.ReadFile(fileDestPrefix)
+	if errDoNot == nil {
+		foundIndexDoNot := strings.Index(string(dat), "DO_NOT_REPLACE")
+		if foundIndexDoNot > -1 {
+			log.Println("found DO_NOT_REPLACE skipping generate " + fileDestPrefix)
+			return "", nil
+		}
+	}
+
 	d1 := []byte(content)
 	err = ioutil.WriteFile(fileDestPrefix, d1, 0644)
 

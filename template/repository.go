@@ -57,7 +57,7 @@ func (repo *{{ ucfirst $msg.Name }}Repository) GetAll(payload *{{ ucfirst $msg.N
 	offset := (int(page) - 1) * limit
 
 	var data []{{ ucfirst $msg.Name }}
-	db := repo.db.Where(payload).Offset(offset).Limit(limit).Find(&data)
+	db := repo.db.Set("gorm:auto_preload", true).Where(payload).Offset(offset).Limit(limit).Find(&data)
 
 	return data, db.Error
 

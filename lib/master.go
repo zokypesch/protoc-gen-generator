@@ -103,8 +103,9 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 		messageName := messageType.GetName()
 		primaryKeyName := ""
 		primaryKeyType := ""
+		isFieldMessage := false
 
-		var newField []Field
+		var newField []*Field
 
 		if iMType == 0 {
 			methodsNameAll += ucDown(messageName)
@@ -120,15 +121,21 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 			originalType := typeData
 
 			isOptional := false
-
 			if typeData == "TYPE_MESSAGE" || messageField.GetTypeName() != "" {
 				onTypeComb := strings.Split(messageField.GetTypeName(), ".")
 				typeData = ucDown(onTypeComb[len(onTypeComb)-1:][0])
 				typeDataGo = ucFirst(onTypeComb[len(onTypeComb)-1:][0])
+				originalType = ucFirst(onTypeComb[len(onTypeComb)-1:][0])
 				if typeDataGo == "Timestamp" {
 					typeDataGo = "time.Time"
 					useTimeStamp = true
 				}
+
+				foundIndexChar := strings.Index(typeDataGo, "_")
+				if foundIndexChar == -1 {
+					isFieldMessage = true
+				}
+
 				originalType = typeDataGo
 			} else {
 				typeData = grpcTypeToTs(typeData)
@@ -178,9 +185,12 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 					}
 				case "errorDesc":
 					errorDescription = vOptField.Value
+				case "foreignKey":
+					foreignValue := vOptField.Value
+					tagField += fmt.Sprintf(` gorm:"foreignkey:%s;association_foreignkey:%s"`, ucFirst(foreignValue), ucFirst(foreignValue))
 				}
 			}
-			newField = append(newField, Field{
+			newField = append(newField, &Field{
 				Name:           messageField.GetJsonName(),
 				NameGo:         underscoreToGoFormat(messageField.GetName()),
 				TypeData:       typeData,
@@ -197,6 +207,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 				FullText:       fullText,
 				Index:          kMessageField + 1,
 				ErrorDesc:      errorDescription,
+				IsFieldMessage: isFieldMessage,
 			})
 		}
 
@@ -258,6 +269,19 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 
 	}
 
+	// rebuild message
+	for _, vNewMessage := range newMessage {
+		for _, vNewFields := range vNewMessage.Fields {
+			if vNewFields.IsFieldMessage == true {
+				resNewField, foundNewField := findMessage(vNewFields.OriginalType, newMessage)
+				if foundNewField {
+					vNewFields.MessageTo = resNewField
+					vNewFields.MessageToName = ucFirst(resNewField.Name)
+				}
+			}
+		}
+	}
+
 	// get enum ini protofile
 	for _, typEnum := range protoFile.GetEnumType() {
 		listOptEnum := make([]*Option, len(typEnum.GetValue()))
@@ -281,6 +305,8 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 	datas.MessageAll = messageAllEs
 	datas.TimeStamp = useTimeStamp
 
+	useEmptyProto := false
+	var whitelist []WhitelistOpt
 	// get service in protofile
 	for kSvc, svc := range protoFile.Service {
 		methods := make([]*Method, len(svc.Method))
@@ -295,7 +321,10 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 			urlPath := ""
 			isAgregator := false
 			agregatorMessage := Message{}
+			agregatorMessageName := ""
+			agregatorGetByPrimary := ""
 			agregatorFunction := ""
+			isGetAllMessage := false
 
 			// get options in service
 			for _, vOpt := range newOptions {
@@ -310,12 +339,17 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 					isAgregator = true
 					msgFun := strings.Split(vOpt.Value, ".")
 					agregatorMessage = getMessageByName(msgFun[0], datas.Messages)
+					agregatorMessageName = ucFirst(agregatorMessage.Name)
+					agregatorGetByPrimary = fmt.Sprintf("GetBy%s", ucFirst(agregatorMessage.PrimaryKeyName))
 					if len(msgFun) == 2 {
 						agregatorFunction = msgFun[1]
 					}
+				case "whitelist":
+					if res, err := strconv.Atoi(vOpt.Value); err == nil && res == 1 {
+						whitelist = append(whitelist, WhitelistOpt{Name: ucFirst(*method.Name), ServiceName: googlegen.CamelCase(svc.GetName())})
+					}
 				}
 			}
-			// log.Println(httpMode, urlPath)
 			onInputMethod := strings.Split(method.GetInputType(), ".")
 			typeInputMethod := ucDown(onInputMethod[len(onInputMethod)-1:][0])
 			onOutputMethod := strings.Split(method.GetOutputType(), ".")
@@ -326,21 +360,39 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 			inputOutputMessage := getIO(outputMessage, agregatorMessage)
 			inputWithAgregator := getIO(inputMessage, agregatorMessage)
 
-			methods[i] = &Method{
-				Name:               ucFirst(*method.Name),
-				Input:              typeInputMethod,
-				Output:             typeOutputMethod,
-				Options:            newOptions,
-				HttpMode:           httpMode,
-				URLPath:            urlPath,
-				InputMessage:       inputMessage,
-				OutputMessage:      outputMessage,
-				IO:                 inputOutputMessage,
-				IsAgregator:        isAgregator,
-				AgregatorMessage:   agregatorMessage,
-				AgregatorFunction:  agregatorFunction,
-				InputWithAgregator: inputWithAgregator,
+			if typeInputMethod == "empty" {
+				useEmptyProto = true
 			}
+
+			for _, vAllMsg := range outputMessage.Fields {
+				if strings.ToLower(vAllMsg.Name) == "items" && isAgregator {
+					newDataTypeWithAgg := strings.Replace(vAllMsg.TypeDataGo, "[]", "", -1)
+					if newDataTypeWithAgg == agregatorMessageName {
+						// log.Println(newDataTypeWithAgg, agregatorMessageName)
+						isGetAllMessage = true
+						break
+					}
+				}
+			}
+
+			methods[i] = &Method{
+				Name:                  ucFirst(*method.Name),
+				Input:                 typeInputMethod,
+				Output:                typeOutputMethod,
+				Options:               newOptions,
+				HttpMode:              httpMode,
+				URLPath:               urlPath,
+				InputMessage:          inputMessage,
+				OutputMessage:         outputMessage,
+				IO:                    inputOutputMessage,
+				IsAgregator:           isAgregator,
+				AgregatorMessage:      agregatorMessage,
+				AgregatorFunction:     agregatorFunction,
+				InputWithAgregator:    inputWithAgregator,
+				IsGetAllMessage:       isGetAllMessage,
+				AgregatorGetByPrimary: agregatorGetByPrimary,
+			}
+			isGetAllMessage = false
 		}
 		// put service in datas
 		datas.Services[kSvc] = Service{
@@ -353,7 +405,9 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 		}
 	}
 
+	datas.WhiteList = whitelist
 	datas.Elastic = useElastic
+	datas.UseEmptyProto = useEmptyProto
 	// get current folder path for assign src
 	gopath := os.Getenv("GOPATH")
 	if gopath == "" {
@@ -367,7 +421,6 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 	datas.Src = filePath
 	// generate process
 	curList := listTemp
-	// log.Println(curList.FileType, "has been executed")
 	buf := bytes.NewBuffer(nil)
 
 	// mapping datas to template
@@ -417,12 +470,12 @@ func getMessageByName(name string, messages []Message) Message {
 }
 
 func getIO(input Message, output Message) Message {
-	var fields []Field
+	var fields []*Field
 	index := 1
 	for _, v := range input.Fields {
 		for _, v2 := range output.Fields {
 			if v.Name == v2.Name && v.TypeDataGo == v2.TypeDataGo {
-				newField := Field(v)
+				newField := Field(*v)
 				newField.Index = index
 
 				if newField.TypeDataGo == "Timestamp" {
@@ -430,7 +483,7 @@ func getIO(input Message, output Message) Message {
 					useTimeStampIO = true
 				}
 
-				fields = append(fields, newField)
+				fields = append(fields, &newField)
 				index++
 			} else {
 				// DO SOMETHING
@@ -441,4 +494,14 @@ func getIO(input Message, output Message) Message {
 		Name:   output.Name,
 		Fields: fields,
 	}
+}
+
+func findMessage(name string, param []Message) (Message, bool) {
+	for _, v := range param {
+		if strings.ToLower(v.Name) == strings.ToLower(name) {
+			newMessage := Message(v)
+			return newMessage, true
+		}
+	}
+	return Message{}, false
 }

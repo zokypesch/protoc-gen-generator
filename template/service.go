@@ -12,7 +12,9 @@ import  (
 	pb "{{ .Src }}/grpc/pb/{{ .GoPackage }}"
 	"context"
 	// "fmt"
+	{{- if .UseEmptyProto}}
 	empty "github.com/golang/protobuf/ptypes/empty"
+	{{- end}}
 	{{- if .Elastic }}
 	core "{{ .Src }}/core"
 	{{- end}}
@@ -77,18 +79,96 @@ func (svc *{{ ucfirst $service.Name }}Service) {{ ucfirst $method.Name }}(ctx co
 		model.{{ ucfirst $field.Name }} = time{{ ucfirst $field.Name }}
 	}
 {{- else }}
+{{- if $field.IsFieldMessage }}
+{{- else }}
 	model.{{ ucfirst $field.Name }} = in.{{ ucfirst $field.Name }}
 {{- end}}
 {{- end}}
 {{- end}}
-{{- if eq $method.AgregatorFunction "GetAll"}}
-	_, err := svc.repo.{{ ucfirst $method.AgregatorMessage.Name }}.{{ $method.AgregatorFunction }}(model)
-{{- else }}
-	res, err := svc.repo.{{ ucfirst $method.AgregatorMessage.Name }}.{{ $method.AgregatorFunction }}(model)
 {{- end}}
+	res, err := svc.repo.{{ ucfirst $method.AgregatorMessage.Name }}.{{ $method.AgregatorFunction }}(model)
 
 	resp := &pb.{{ ucfirst $method.Output }}{}
+
 {{- if eq $method.AgregatorFunction "GetAll"}}
+{{- if $method.IsGetAllMessage }}
+	var resItems []*pb.{{ucfirst $method.AgregatorMessage.Name}}
+
+	for _, vItems := range res {{ unescape "{"}}
+		newItem := &pb.{{ucfirst $method.AgregatorMessage.Name}}{{ unescape "{}"}}
+{{- range $field := $method.AgregatorMessage.Fields }} 
+{{- if eq $field.IgnoreGorm false }}
+	{{- if eq $field.TypeDataGo "time.Time"}}
+		protoTimeResp{{ ucfirst $field.Name }}, errProtoTimeResp{{ ucfirst $field.Name }} := ptypes.TimestampProto(vItems.{{ ucfirst $field.Name }})
+
+		if errProtoTimeResp{{ ucfirst $field.Name }} == nil {
+			newItem.{{ ucfirst $field.Name }} = protoTimeResp{{ ucfirst $field.Name }}
+		}
+	{{- else }}
+	{{- if eq $field.IsFieldMessage true }}
+		{{- if $field.IsRepeated }}
+		// mapping slice sub struct of {{ucfirst $field.MessageToName}}
+		var res{{ucfirst $field.MessageToName}} []*pb.{{ucfirst $field.MessageToName}}
+		for _, vItems := range vItems.{{ucfirst $field.MessageToName}} {{ unescape "{"}}
+			newItem := &pb.{{ucfirst $field.MessageToName}}{{ unescape "{}"}}
+			{{- range $newFieldMsg := $field.MessageTo.Fields}}
+			{{- if eq $newFieldMsg.TypeDataGo "time.Time"}}
+			protoTimeResp{{ucfirst $field.MessageToName}}{{ ucfirst $newFieldMsg.Name }}, errProtoTimeResp{{ucfirst $field.MessageToName}}{{ ucfirst $newFieldMsg.Name }} := ptypes.TimestampProto(vItems.{{ ucfirst $newFieldMsg.Name }})
+
+			if errProtoTimeResp{{ucfirst $field.MessageToName}}{{ ucfirst $newFieldMsg.Name }} == nil {
+				newItem.{{ ucfirst $newFieldMsg.Name }} = protoTimeResp{{ucfirst $field.MessageToName}}{{ ucfirst $newFieldMsg.Name }}
+			}
+			{{- else }}
+			{{- if $newFieldMsg.IsFieldMessage }}
+			{{- else }}
+			newItem.{{ ucfirst $newFieldMsg.Name }} = vItems.{{ ucfirst $newFieldMsg.Name }}
+			{{- end}}
+			{{- end }}
+			{{- end }}
+			res{{ucfirst $field.MessageToName}} = append(res{{ucfirst $field.MessageToName}}, newItem)
+		{{ unescape "}"}}
+		newItem.{{ucfirst $field.MessageToName}} = res{{ucfirst $field.MessageToName }}
+		// end mapping slice
+		{{- else}}
+		{{- if eq $field.MessageToName ""}}
+		{{- else}}
+		// mapping sub struct of {{ucfirst $field.MessageToName}}
+		res{{ucfirst $field.MessageToName}} := &pb.{{ucfirst $field.MessageToName}}{{ unescape "{}"}}
+		{{- range $newFieldMsg := $field.MessageTo.Fields}}
+		{{- if eq $newFieldMsg.TypeDataGo "time.Time"}}
+		protoTimeResp{{ucfirst $field.MessageToName}}{{ ucfirst $newFieldMsg.Name }}, errProtoTimeResp{{ucfirst $field.MessageToName}}{{ ucfirst $newFieldMsg.Name }} := ptypes.TimestampProto(vItems.{{ucfirst $field.MessageToName}}.{{ ucfirst $newFieldMsg.Name }})
+
+		if errProtoTimeResp{{ucfirst $field.MessageToName}}{{ ucfirst $newFieldMsg.Name }} == nil {
+			res{{ucfirst $field.MessageToName}}.{{ ucfirst $newFieldMsg.Name }} = protoTimeResp{{ucfirst $field.MessageToName}}{{ ucfirst $newFieldMsg.Name }}
+		}
+		{{- else }}
+		{{- if $newFieldMsg.IsFieldMessage }}
+		{{- else }}
+		res{{ucfirst $field.MessageToName}}.{{ ucfirst $newFieldMsg.Name }} = vItems.{{ucfirst $field.MessageToName}}.{{ ucfirst $newFieldMsg.Name }}
+		{{- end}}
+		{{- end}}
+		{{- end }}
+		newItem.{{ucfirst $field.MessageToName}} = res{{ucfirst $field.MessageToName }}
+		// endof mapping of {{ucfirst $field.MessageToName}}
+		{{- end }}
+		{{- end}}
+	{{- else }}
+		newItem.{{ ucfirst $field.Name }} = vItems.{{ ucfirst $field.Name }}
+	{{- end}}
+	{{- end}}
+	
+{{- end}}
+{{- end}}
+		
+		resItems = append(resItems, newItem) 
+	{{ unescape "}"}}
+
+	resp.Items = resItems
+	resp.Total = int64(len(resItems))
+	resp.Page = in.Page
+	resp.PerPage = in.PerPage
+{{- end}}
+
 {{- else}}
 {{- range $field := $method.IO.Fields }}
 {{- if eq $field.IgnoreGorm false }}
@@ -100,7 +180,60 @@ func (svc *{{ ucfirst $service.Name }}Service) {{ ucfirst $method.Name }}(ctx co
 		resp.{{ ucfirst $field.Name }} = protoTimeResp{{ ucfirst $field.Name }}
 	}
 {{- else }}
+{{- if $field.IsFieldMessage }}
+{{- if eq $method.AgregatorFunction $method.AgregatorGetByPrimary}}
+{{- if $field.IsRepeated }}
+	// Mapping sub struct of {{ucfirst $field.MessageToName}}
+	var res{{ucfirst $field.MessageToName}} []*pb.{{ucfirst $field.MessageToName}}
+	for _, vItems := range res.{{ucfirst $field.MessageToName}} {{ unescape "{"}}
+		newItem := &pb.{{ucfirst $field.MessageToName}}{{ unescape "{}"}}
+		{{- range $newFieldMsg := $field.MessageTo.Fields}}
+		{{- if eq $newFieldMsg.TypeDataGo "time.Time"}}
+		protoTimeResp{{ucfirst $field.MessageToName}}{{ ucfirst $newFieldMsg.Name }}, errProtoTimeResp{{ucfirst $field.MessageToName}}{{ ucfirst $newFieldMsg.Name }} := ptypes.TimestampProto(vItems.{{ ucfirst $newFieldMsg.Name }})
+
+		if errProtoTimeResp{{ucfirst $field.MessageToName}}{{ ucfirst $newFieldMsg.Name }} == nil {
+			newItem.{{ ucfirst $newFieldMsg.Name }} = protoTimeResp{{ucfirst $field.MessageToName}}{{ ucfirst $newFieldMsg.Name }}
+		}
+		{{- else }}
+		{{- if $newFieldMsg.IsFieldMessage }}
+		{{- else }}
+		newItem.{{ ucfirst $newFieldMsg.Name }} = vItems.{{ ucfirst $newFieldMsg.Name }}
+		{{- end}}
+		{{- end }}
+		{{- end }}
+		res{{ucfirst $field.MessageToName}} = append(res{{ucfirst $field.MessageToName}}, newItem)
+	{{ unescape "}"}}
+	resp.{{ucfirst $field.MessageToName}} = res{{ucfirst $field.MessageToName }}
+	// end mapping sub struct of {{ucfirst $field.MessageToName}}
+	{{- else}}
+
+	{{- if eq $field.MessageToName ""}}
+	{{- else}}
+	// Mapping sub struct of {{ucfirst $field.MessageToName}}
+	res{{ucfirst $field.MessageToName}} := &pb.{{ucfirst $field.MessageToName}}{{ unescape "{}"}}
+	{{- range $newFieldMsg := $field.MessageTo.Fields}}
+	{{- if eq $newFieldMsg.TypeDataGo "time.Time"}}
+	protoTimeResp{{ucfirst $field.MessageToName}}{{ ucfirst $newFieldMsg.Name }}, errProtoTimeResp{{ucfirst $field.MessageToName}}{{ ucfirst $newFieldMsg.Name }} := ptypes.TimestampProto(res.{{ucfirst $field.MessageToName}}.{{ ucfirst $newFieldMsg.Name }})
+
+	if errProtoTimeResp{{ucfirst $field.MessageToName}}{{ ucfirst $newFieldMsg.Name }} == nil {
+		res{{ucfirst $field.MessageToName}}.{{ ucfirst $newFieldMsg.Name }} = protoTimeResp{{ucfirst $field.MessageToName}}{{ ucfirst $newFieldMsg.Name }}
+	}
+	{{- else }}
+	{{- if $newFieldMsg.IsFieldMessage }}
+	{{- else }}
+	res{{ucfirst $field.MessageToName}}.{{ ucfirst $newFieldMsg.Name }} = res.{{ucfirst $field.MessageToName}}.{{ ucfirst $newFieldMsg.Name }}
+	{{- end}}
+	{{- end}}
+	{{- end }}
+	resp.{{ucfirst $field.MessageToName}} = res{{ucfirst $field.MessageToName }}
+	// end mapping sub struct of {{ucfirst $field.MessageToName}}
+	{{- end }}
+	{{- end}}
+	{{- end}}
+{{- else }}
 	resp.{{ ucfirst $field.Name }} = res.{{ ucfirst $field.Name }}
+{{- end}}
+	
 {{- end}}
 
 {{- end}}

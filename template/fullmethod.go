@@ -15,7 +15,7 @@ import  (
 const (
 {{- range $service := .Services }}
 {{- range $method := $service.Methods }}
-	{{ $service.Name }}_{{ $method.Name }} = "/{{ $.Package }}.{{ $service.Name }}/{{ $method.Name }}"
+	{{ $service.Name }}_{{ $method.Name }} = "/{{ $.Package }}.{{ ucdown $service.Name }}/{{ $method.Name }}"
 {{- end}}
 {{- end}}
 )
