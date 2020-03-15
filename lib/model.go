@@ -28,6 +28,7 @@ type Method struct {
 	InputWithAgregator    Message
 	IsGetAllMessage       bool
 	IsPageLimitFound      bool
+	IORelated             bool
 }
 
 // Option for optional

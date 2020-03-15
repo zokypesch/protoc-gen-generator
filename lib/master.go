@@ -402,6 +402,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 				IsGetAllMessage:       isGetAllMessage,
 				AgregatorGetByPrimary: agregatorGetByPrimary,
 				IsPageLimitFound:      isPageParamFound && isLimitParamFound,
+				IORelated:             len(inputOutputMessage.Fields) > 0,
 			}
 			isGetAllMessage = false
 		}
