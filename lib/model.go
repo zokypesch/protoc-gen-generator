@@ -29,6 +29,10 @@ type Method struct {
 	IsGetAllMessage       bool
 	IsPageLimitFound      bool
 	IORelated             bool
+	MessageRequest        Message
+	MessageResponse       Message
+	HasIntegration        bool
+	// IntegMessage          []Message
 }
 
 // Option for optional
@@ -50,6 +54,7 @@ type Message struct {
 	Fields         []*Field
 	Options        []*Option
 	Domain         string
+	HasIntegration bool
 }
 
 // Enum for messaging enum
@@ -80,27 +85,48 @@ type Field struct {
 	IsFieldMessage bool
 	MessageTo      Message
 	MessageToName  string
+	Integration    bool
+	IntegrationCfg *IntegrationConfig
 }
 
 // Data for struct list of data
 type Data struct {
-	FileName      string
-	Src           string
-	GoPackage     string
-	Package       string
-	Services      []Service
-	Messages      []Message
-	NumMessage    int
-	MessageAll    string
-	Enums         []*Enum
-	Elastic       bool
-	TimeStamp     bool
-	UseEmptyProto bool
-	WhiteList     []WhitelistOpt
+	FileName           string
+	Src                string
+	GoPackage          string
+	Package            string
+	Services           []Service
+	Messages           []Message
+	NumMessage         int
+	MessageAll         string
+	Enums              []*Enum
+	Elastic            bool
+	TimeStamp          bool
+	UseEmptyProto      bool
+	WhiteList          []WhitelistOpt
+	IntegrationMessage []Message
 }
 
 // WhitelistOpt for the struct whitelist
 type WhitelistOpt struct {
 	Name        string
 	ServiceName string
+}
+
+// IntegrationConfig for integration config
+type IntegrationConfig struct {
+	ProtoFileLoc        string
+	GrpcMethod          string
+	GrpcAddress         string
+	ProtoDomain         string
+	GrpcPort            string
+	GrpcRequestName     string
+	GrpcResponseName    string
+	GrpcRequestMessage  string
+	GrpcResponseMessage string
+	GrpcRequestMsg      Message
+	GrpcResponseMsg     Message
+	ResultRequest       Message
+	ResultResponse      Message
+	Unique              string
 }

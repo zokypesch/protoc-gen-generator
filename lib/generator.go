@@ -136,6 +136,8 @@ func writeResponse(w io.Writer, response *plugin.CodeGeneratorResponse) error {
 	return nil
 }
 
+var generateIntegrationProto = false
+
 func writeResponseWithList(w io.Writer, response *plugin.CodeGeneratorResponse, list List, pkgName string, datas Data) (string, error) {
 	_, err := proto.Marshal(response)
 	// _, err := proto.Marshal(response)
@@ -210,6 +212,14 @@ func writeResponseWithList(w io.Writer, response *plugin.CodeGeneratorResponse, 
 
 	if err != nil {
 		return "", errors.Wrap(err, "failed to write output proto")
+	}
+
+	// generate pb integration
+	if !generateIntegrationProto {
+		generateIntegrationProto = true
+		for _, vDt := range datas.IntegrationMessage {
+			integrationProcess(vDt)
+		}
 	}
 
 	return fileName, nil

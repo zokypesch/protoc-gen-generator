@@ -57,6 +57,7 @@ func main() {
 		template.ListTomlv2,
 		template.ListDocker,
 		template.ListReadme,
+		template.ListIntegration,
 	}
 	res, err := lib.NewMaster(list).Generate()
 

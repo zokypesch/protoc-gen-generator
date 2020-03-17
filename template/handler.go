@@ -56,7 +56,15 @@ func (handler *{{ ucfirst $service.Name }}) {{ ucfirst $method.Name }}(ctx conte
 		return &pb.{{ ucfirst $method.Output }}{}, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 {{- end}}
+	{{- if $method.HasIntegration }}
+	reqIntegration, errIntegration := handler.svc.{{ ucfirst $method.Name }}(ctx, in)
+	if errIntegration != nil {
+		return &pb.{{ ucfirst $method.Output }}{}, errIntegration
+	} 
+	return domain.GetIntegration{{ ucfirst $method.Name }}(ctx, reqIntegration)
+	{{- else }}
 	return handler.svc.{{ ucfirst $method.Name }}(ctx, in)
+	{{- end }}
 }
 {{- end}}
 {{- end}}

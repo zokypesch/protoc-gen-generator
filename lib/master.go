@@ -113,6 +113,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 			methodsNameAll += "," + ucDown(messageName)
 		}
 
+		integMsg := false
 		// get field in message
 		for kMessageField, messageField := range messageType.Field {
 			typeData := messageField.GetType().String()
@@ -159,6 +160,8 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 			tagField := ""
 			fullText := false
 			errorDescription := "this field is required"
+			integration := false
+			var intConfig *IntegrationConfig
 
 			// get options in field
 			for _, vOptField := range newFieldOptions {
@@ -188,8 +191,18 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 				case "foreignKey":
 					foreignValue := vOptField.Value
 					tagField += fmt.Sprintf(` gorm:"foreignkey:%s;association_foreignkey:%s"`, ucFirst(foreignValue), ucFirst(foreignValue))
+				// for integratiom
+				case "integration":
+					if res, err := strconv.Atoi(vOptField.Value); err == nil && res == 1 {
+						integration = true
+						integMsg = true
+					}
 				}
 			}
+			// for get integration
+			intConfig = integrationCheckOpt(newFieldOptions)
+			intConfig.Unique = fmt.Sprintf("%s%s", ucFirst(intConfig.ProtoDomain), ucFirst(intConfig.GrpcMethod))
+
 			newField = append(newField, &Field{
 				Name:           messageField.GetJsonName(),
 				NameGo:         underscoreToGoFormat(messageField.GetName()),
@@ -208,6 +221,8 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 				Index:          kMessageField + 1,
 				ErrorDesc:      errorDescription,
 				IsFieldMessage: isFieldMessage,
+				Integration:    integration,
+				IntegrationCfg: intConfig,
 			})
 		}
 
@@ -265,6 +280,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 			PrimaryKeyType: primaryKeyType,
 			IsElastic:      elastic,
 			NumField:       len(newField),
+			HasIntegration: integMsg,
 		})
 
 	}
@@ -305,6 +321,8 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 	datas.MessageAll = messageAllEs
 	datas.TimeStamp = useTimeStamp
 
+	var integrationMessage []Message
+
 	useEmptyProto := false
 	var whitelist []WhitelistOpt
 	// get service in protofile
@@ -313,6 +331,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 
 		// get method inside service
 		for i, method := range svc.Method {
+			// var methodIntegration []Message
 			methodsNameAll += ", Output" + ucFirst(*method.Name)
 
 			methOpt := method.GetOptions().String()
@@ -362,6 +381,32 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 			inputOutputMessage := getIO(outputMessage, agregatorMessage)
 			inputWithAgregator := getIO(inputMessage, agregatorMessage)
 
+			if outputMessage.HasIntegration {
+				// check duplication
+				foundDupl := false
+				for _, vIntMsg := range integrationMessage {
+					if vIntMsg.Name == outputMessage.Name {
+						foundDupl = true
+					}
+				}
+
+				if !foundDupl {
+					// mapping grpc request to response field
+					// mapping grpc response to field response
+					for _, dtField := range outputMessage.Fields {
+						if dtField.Integration {
+							dtField.IntegrationCfg.GrpcRequestMsg = getMessageByName(dtField.IntegrationCfg.GrpcRequestMessage, datas.Messages)
+							dtField.IntegrationCfg.GrpcResponseMsg = getMessageByName(dtField.IntegrationCfg.GrpcResponseMessage, datas.Messages)
+							dtField.IntegrationCfg.ResultRequest = getIO(outputMessage, dtField.IntegrationCfg.GrpcRequestMsg)
+							dtField.IntegrationCfg.ResultResponse = getIO(dtField.MessageTo, dtField.IntegrationCfg.GrpcResponseMsg)
+						}
+					}
+					// methodIntegration = append(methodIntegration, outputMessage)
+					integrationMessage = append(integrationMessage, outputMessage)
+				}
+
+			}
+
 			if typeInputMethod == "empty" {
 				useEmptyProto = true
 			}
@@ -403,6 +448,8 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 				AgregatorGetByPrimary: agregatorGetByPrimary,
 				IsPageLimitFound:      isPageParamFound && isLimitParamFound,
 				IORelated:             len(inputOutputMessage.Fields) > 0,
+				HasIntegration:        outputMessage.HasIntegration,
+				// IntegMessage:          methodIntegration,
 			}
 			isGetAllMessage = false
 		}
@@ -420,6 +467,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 	datas.WhiteList = whitelist
 	datas.Elastic = useElastic
 	datas.UseEmptyProto = useEmptyProto
+	datas.IntegrationMessage = integrationMessage
 	// get current folder path for assign src
 	gopath := os.Getenv("GOPATH")
 	if gopath == "" {
@@ -445,6 +493,8 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 			"getFirstService": getFirstService,
 			"upper":           strings.ToUpper,
 			"underscore":      underscore,
+			"allowRequest":    allowRequest,
+			"currentLoc":      currentLoc,
 		}).
 		Parse(curList.Template)).Execute(buf, datas)
 
@@ -516,4 +566,21 @@ func findMessage(name string, param []Message) (Message, bool) {
 		}
 	}
 	return Message{}, false
+}
+
+var ignoreField = []string{
+	"createdat",
+	"updatedat",
+	"createdby",
+	"updatedby",
+	"updateddate",
+}
+
+func allowRequest(field string) bool {
+	for _, v := range ignoreField {
+		if v == strings.ToLower(field) {
+			return false
+		}
+	}
+	return true
 }
