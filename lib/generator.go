@@ -175,9 +175,15 @@ func writeResponseWithList(w io.Writer, response *plugin.CodeGeneratorResponse, 
 
 	} else if list.Lang == "elastic" {
 		if !datas.Elastic {
-			return "", nil
+			return "elastic cancel generate", nil
 		}
 		fileName = "elastic.go"
+	} else if list.Lang == "integration" {
+		if len(datas.IntegrationMessage) == 0 {
+			return "integration not found,", nil
+		}
+	} else if list.Lang == "git" {
+		fileName = ".gitignore"
 	}
 
 	content := response.GetFile()[0].GetContent()

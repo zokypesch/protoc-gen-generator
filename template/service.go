@@ -11,7 +11,6 @@ var tmplService = `package {{ ucdown (getFirstService .Services).Name }}
 import  (
 	pb "{{ .Src }}/grpc/pb/{{ .GoPackage }}"
 	"context"
-	// "fmt"
 	{{- if .UseEmptyProto}}
 	empty "github.com/golang/protobuf/ptypes/empty"
 	{{- end}}

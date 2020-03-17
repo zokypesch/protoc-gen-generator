@@ -99,5 +99,5 @@ var ListIntegration = lib.List{
 	FileType: ".integration.go",
 	Template: tmplIntegration,
 	Location: "./%s/",
-	Lang:     "go",
+	Lang:     "integration",
 }
