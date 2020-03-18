@@ -11,7 +11,7 @@ ARG APP_NAME=platform
 ENV GOBIN /go/bin
 
 # build directories
-ENV SRC_DIR="/go/src/{{ .Src }}/{{ ucdown (getFirstService .Services).Name }}"
+ENV SRC_DIR="/go/src/{{ .Src }}"
 RUN mkdir /app
 RUN mkdir -p $SRC_DIR
 
