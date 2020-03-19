@@ -151,6 +151,8 @@ func getStringFromOptCode(param string) string {
 		return "grpcRequestMessage"
 	case "50077":
 		return "grpcResponseMessage"
+	case "50078":
+		return "associateKey"
 	}
 	return ""
 }

@@ -162,6 +162,8 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 			errorDescription := "this field is required"
 			integration := false
 			var intConfig *IntegrationConfig
+			foreignKeyDb := ""
+			associateKeyDb := ""
 
 			// get options in field
 			for _, vOptField := range newFieldOptions {
@@ -189,8 +191,9 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 				case "errorDesc":
 					errorDescription = vOptField.Value
 				case "foreignKey":
-					foreignValue := vOptField.Value
-					tagField += fmt.Sprintf(` gorm:"foreignkey:%s;association_foreignkey:%s"`, ucFirst(foreignValue), ucFirst(foreignValue))
+					foreignKeyDb = vOptField.Value
+				case "associateKey":
+					associateKeyDb = vOptField.Value
 				// for integratiom
 				case "integration":
 					if res, err := strconv.Atoi(vOptField.Value); err == nil && res == 1 {
@@ -198,6 +201,10 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 						integMsg = true
 					}
 				}
+			}
+
+			if foreignKeyDb != "" || associateKeyDb != "" {
+				tagField += fmt.Sprintf(` gorm:"foreignkey:%s;association_foreignkey:%s"`, foreignKeyDb, associateKeyDb)
 			}
 			// for get integration
 			intConfig = integrationCheckOpt(newFieldOptions)
