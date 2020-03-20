@@ -37,7 +37,7 @@ Request: {{ $method.InputMessage.Name }}
 {
 	{{ range $field := $method.InputMessage.Fields }}
 	{{- if allowRequest $field.Name }}
-	"{{ ucdown $field.NameGo }}": {{ $field.TypeDataGo }}  {{- if eq $field.Tag "" }} {{- else}} '{{ unescape $field.Tag }}' {{- end}},
+	"{{ ucdown $field.NameGo }}": {{ $field.TypeDataGo }}  {{- if eq $field.Tag "" }} {{- else}} '{{ unescape $field.Tag }}' {{- end}}{{if $field.ExtraComma }},{{- end }}
 	{{- end }}
 	{{- end}}
 }
@@ -46,16 +46,16 @@ Response: {{ $method.OutputMessage.Name }}
 	{{ range $field := $method.OutputMessage.Fields }}
 	{{- if $field.IsFieldMessage }}
 	{{- if eq $field.MessageTo.Name "" }}
-	"{{ ucdown $field.NameGo }}": {{ $field.TypeDataGo }},
+	"{{ ucdown $field.NameGo }}": {{ $field.TypeDataGo }}{{if $field.ExtraComma }},{{- end }}
 	{{- else }}
-	"{{ ucdown $field.NameGo }}": {
+	"{{ ucdown $field.NameGo }}": {{- if $field.IsRepeated }}{{ unescape "[" }}{{- end}}{
 		{{ range $sub := $field.MessageTo.Fields }}
 		"{{ ucdown $sub.NameGo }}": {{ $sub.TypeDataGo }},
 		{{- end}}
-	}
+	}{{- if $field.IsRepeated }}{{ unescape "]" }}{{- end}}{{if $field.ExtraComma }},{{- end }}
 	{{- end }}
 	{{- else }}
-	"{{ ucdown $field.NameGo }}": {{ $field.TypeDataGo }},
+	"{{ ucdown $field.NameGo }}": {{ $field.TypeDataGo }}{{if $field.ExtraComma }},{{- end }}
 	{{- end }}
 	{{- end}}
 }
