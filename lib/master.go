@@ -115,6 +115,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 
 		integMsg := false
 		// get field in message
+		totalFieldMessage := 1
 		for kMessageField, messageField := range messageType.Field {
 			typeData := messageField.GetType().String()
 			typeDataGo := messageField.GetType().String()
@@ -230,7 +231,9 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 				IsFieldMessage: isFieldMessage,
 				Integration:    integration,
 				IntegrationCfg: intConfig,
+				ExtraComma:     totalFieldMessage < len(messageType.Field),
 			})
+			totalFieldMessage++
 		}
 
 		// get enum declare in message protofile
@@ -336,6 +339,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 	for kSvc, svc := range protoFile.Service {
 		methods := make([]*Method, len(svc.Method))
 
+		totalMethodSvc := 1
 		// get method inside service
 		for i, method := range svc.Method {
 			// var methodIntegration []Message
@@ -345,6 +349,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 			newOptions := stringToOpt(methOpt)
 			httpMode := "get"
 			urlPath := ""
+			var pathPostman []PathPostman
 			isAgregator := false
 			agregatorMessage := Message{}
 			agregatorMessageName := ""
@@ -361,6 +366,21 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 					// newURL, newMode := getHttpModeWithUrl(vOpt.Value)
 					// httpMode = newMode
 					urlPath = getHttpUrl(vOpt.Value)
+					urlPost := strings.Replace(urlPath, "{id}", "1", -1)
+					urlPostSlice := strings.Split(urlPost, "/")
+
+					iSlice := 1
+					for _, vSlice := range urlPostSlice {
+						extraString := ""
+						if iSlice < len(urlPostSlice) {
+							extraString = ","
+						}
+						if len(vSlice) > 0 {
+							pathPostman = append(pathPostman, PathPostman{Name: vSlice, Extra: extraString})
+						}
+						iSlice++
+
+					}
 				case "httpMode":
 					httpMode = vOpt.Value
 				case "agregator":
@@ -456,8 +476,11 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 				IsPageLimitFound:      isPageParamFound && isLimitParamFound,
 				IORelated:             len(inputOutputMessage.Fields) > 0,
 				HasIntegration:        outputMessage.HasIntegration,
+				PathPostman:           pathPostman,
+				ExtraComma:            totalMethodSvc < len(svc.Method),
 				// IntegMessage:          methodIntegration,
 			}
+			totalMethodSvc++
 			isGetAllMessage = false
 		}
 		// put service in datas
@@ -502,6 +525,9 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 			"underscore":      underscore,
 			"allowRequest":    allowRequest,
 			"currentLoc":      currentLoc,
+			"generateGuid":    generateGUID,
+			"toupper":         strings.ToUpper,
+			"strReplaceParam": strReplaceParam,
 		}).
 		Parse(curList.Template)).Execute(buf, datas)
 
@@ -559,6 +585,13 @@ func getIO(input Message, output Message) Message {
 			}
 		}
 	}
+
+	for k, v := range fields {
+		if (k + 1) < len(fields) {
+			v.ExtraComma = true
+		}
+	}
+
 	return Message{
 		Name:   output.Name,
 		Fields: fields,
@@ -590,4 +623,8 @@ func allowRequest(field string) bool {
 		}
 	}
 	return true
+}
+
+func strReplaceParam(param string) string {
+	return strings.Replace(param, "{id}", "1", -1)
 }

@@ -160,7 +160,7 @@ func writeResponseWithList(w io.Writer, response *plugin.CodeGeneratorResponse, 
 
 	}
 
-	if list.Lang == "go" {
+	if list.Lang == "go" || list.Lang == "json" {
 		fileName = strings.ToLower(fileName)
 	} else if list.Lang == "yaml" {
 		fileName = "service.yaml"

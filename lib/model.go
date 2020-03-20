@@ -32,7 +32,15 @@ type Method struct {
 	MessageRequest        Message
 	MessageResponse       Message
 	HasIntegration        bool
+	PathPostman           []PathPostman
+	ExtraComma            bool
 	// IntegMessage          []Message
+}
+
+// PathPostman for path postman
+type PathPostman struct {
+	Name  string
+	Extra string
 }
 
 // Option for optional
@@ -87,6 +95,7 @@ type Field struct {
 	MessageToName  string
 	Integration    bool
 	IntegrationCfg *IntegrationConfig
+	ExtraComma     bool
 }
 
 // Data for struct list of data

@@ -59,6 +59,7 @@ func main() {
 		template.ListReadme,
 		template.ListIntegration,
 		template.ListGitIgone,
+		template.ListPostman,
 	}
 	res, err := lib.NewMaster(list).Generate()
 

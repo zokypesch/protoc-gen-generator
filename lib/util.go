@@ -13,7 +13,15 @@ import (
 	"regexp"
 	"strings"
 	"unicode"
+
+	uuid "github.com/satori/go.uuid"
 )
+
+func generateGUID() string {
+	u1 := uuid.NewV4()
+
+	return u1.String()
+}
 
 func grpcTypeToTs(param string) string {
 	switch param {
