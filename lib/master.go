@@ -121,6 +121,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 			typeDataGo := messageField.GetType().String()
 			originalName := messageField.GetName()
 			originalType := typeData
+			postmanType := "string"
 
 			isOptional := false
 			if typeData == "TYPE_MESSAGE" || messageField.GetTypeName() != "" {
@@ -143,6 +144,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 				typeData = grpcTypeToTs(typeData)
 				typeDataGo = grpcTypeToGo(typeDataGo)
 				originalType = typeDataGo
+				postmanType = typeDataPostman(typeDataGo)
 			}
 			isRepeated := false
 
@@ -232,6 +234,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 				Integration:    integration,
 				IntegrationCfg: intConfig,
 				ExtraComma:     totalFieldMessage < len(messageType.Field),
+				PostmanType:    postmanType,
 			})
 			totalFieldMessage++
 		}

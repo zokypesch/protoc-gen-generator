@@ -96,6 +96,7 @@ type Field struct {
 	Integration    bool
 	IntegrationCfg *IntegrationConfig
 	ExtraComma     bool
+	PostmanType    string
 }
 
 // Data for struct list of data

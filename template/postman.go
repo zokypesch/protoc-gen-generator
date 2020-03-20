@@ -34,15 +34,22 @@ var tmplPostman = `{
 					"raw": ""
 				},
 				{{- else }}
+				{{- if eq $method.HttpMode "delete" }}
 				"body": {
 					"mode": "raw",
-					"raw": "{{ unescape "{" }}{{ range $field := $method.InputMessage.Fields }}\n\t\"{{ ucdown $field.NameGo }}\": \"\"{{if $field.ExtraComma }},{{- end }}{{- end }}}",
+					"raw": ""
+				},
+				{{- else }}
+				"body": {
+					"mode": "raw",
+					"raw": "{{ unescape "{" }}{{ range $field := $method.InputMessage.Fields }}\n\t\"{{ ucdown $field.NameGo }}\": {{- if eq $field.PostmanType "string" }}\"\"{{- else }}1{{- end }}{{if $field.ExtraComma }},{{- end }}{{- end }}}",
 					"options": {
 						"raw": {
 							"language": "json"
 						}
 					}
 				},
+				{{- end }}
 				{{- end }}
 				"url": {
 					"raw": "http://147.139.166.237{{ strReplaceParam $method.URLPath }}",

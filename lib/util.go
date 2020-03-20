@@ -443,3 +443,11 @@ func shellout(param string) (string, string, error) {
 	err := cmd.Run()
 	return stdout.String(), stderr.String(), err
 }
+func typeDataPostman(input string) string {
+	switch input {
+	case "float64", "float32", "int64", "int32":
+		return "int"
+	default:
+		return "string"
+	}
+}
