@@ -57,7 +57,7 @@ func (repo *{{ ucfirst $msg.Name }}Repository) GetAll(payload *{{ ucfirst $msg.N
 	var data []{{ ucfirst $msg.Name }}
 	var total int
 
-	db := repo.db.Set("gorm:auto_preload", true).Mode(&{{ ucfirst $msg.Name }}{{ unescape "{" }}{{ unescape "}" }}).Where(payload)
+	db := repo.db.Set("gorm:auto_preload", true).Model(&{{ ucfirst $msg.Name }}{{ unescape "{" }}{{ unescape "}" }}).Where(payload)
 	db.Count(&total)
 	db.Offset(offset).Limit(limitInit).Find(&data)
 
