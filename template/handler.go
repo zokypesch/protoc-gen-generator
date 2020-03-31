@@ -14,6 +14,9 @@ import  (
 	{{- if .UseEmptyProto}}
 	empty "github.com/golang/protobuf/ptypes/empty"
 	{{- end}}
+	{{- if .TimeStamp }}
+	ptypes "github.com/golang/protobuf/ptypes"
+	{{- end}}
 	validator "github.com/go-playground/validator"
 	domain "{{ .Src }}/{{ ucdown (getFirstService .Services).Name }}"
 	"google.golang.org/grpc/codes"
@@ -46,6 +49,11 @@ func (handler *{{ ucfirst $service.Name }}) {{ ucfirst $method.Name }}(ctx conte
 {{- range $field := $method.InputWithAgregator.Fields }}
 {{- if $field.RequiredOption}}
 {{- if eq $field.TypeDataGo "time.Time"}}
+	time{{ ucfirst $field.Name }}, errTime{{ ucfirst $field.Name }} := ptypes.Timestamp(in.{{ ucfirst $field.Name }})
+
+	if errTime{{ ucfirst $field.Name }} == nil {
+		model.{{ ucfirst $field.Name }} = time{{ ucfirst $field.Name }}
+	}
 {{- else }}
 	model.{{ ucfirst $field.Name }} = in.{{ ucfirst $field.Name }}
 {{- end}}

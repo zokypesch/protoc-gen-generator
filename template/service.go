@@ -87,9 +87,9 @@ func (svc *{{ ucfirst $service.Name }}Service) {{ ucfirst $method.Name }}(ctx co
 {{- end}}
 {{- if eq $method.AgregatorFunction "GetAll"}}
 {{- if $method.IsPageLimitFound}}
-	res, err := svc.repo.{{ ucfirst $method.AgregatorMessage.Name }}.{{ $method.AgregatorFunction }}(model, in.Page, in.PerPage)
+	res, totalAll, err := svc.repo.{{ ucfirst $method.AgregatorMessage.Name }}.{{ $method.AgregatorFunction }}(model, in.Page, in.PerPage)
 {{- else}}
-	res, err := svc.repo.{{ ucfirst $method.AgregatorMessage.Name }}.{{ $method.AgregatorFunction }}(model, 1, 1000)
+	res, totalAll, err := svc.repo.{{ ucfirst $method.AgregatorMessage.Name }}.{{ $method.AgregatorFunction }}(model, 1, 1000)
 {{- end }}
 {{- else}}
 {{- if $method.IORelated}}
@@ -173,7 +173,7 @@ func (svc *{{ ucfirst $service.Name }}Service) {{ ucfirst $method.Name }}(ctx co
 		resItems = append(resItems, newItem) 
 	{{ unescape "}"}}
 	resp.Items = resItems
-	resp.Total = int64(len(resItems))
+	resp.Total = int64(totalAll)
 {{- if $method.IsPageLimitFound}}
 	resp.Page = in.Page
 	resp.PerPage = in.PerPage

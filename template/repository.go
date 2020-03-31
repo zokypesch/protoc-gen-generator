@@ -23,7 +23,7 @@ type {{ ucfirst $msg.Name }}Repository struct {
 // {{ ucfirst $msg.Name }}RepoService for interfacing repository
 type {{ ucfirst $msg.Name }}RepoService interface {
 	GetBy{{ $msg.PrimaryKeyName }}(payload *{{ ucfirst $msg.Name }}) (*{{ucfirst $msg.Name}}, error)
-	GetAll(payload *{{ ucfirst $msg.Name }}, page int64, limit int64) ([]{{ ucfirst $msg.Name }}, error)
+	GetAll(payload *{{ ucfirst $msg.Name }}, page int64, limit int64) ([]{{ ucfirst $msg.Name }}, int, error)
 	Create(payload *{{ ucfirst $msg.Name }}) (*{{ucfirst $msg.Name}}, error)
 	Update(payload *{{ ucfirst $msg.Name }}) (*{{ ucfirst $msg.Name }}, error)
 	Delete(payload *{{ ucfirst $msg.Name }}) (*{{ ucfirst $msg.Name }}, error)
@@ -51,13 +51,19 @@ func (repo *{{ ucfirst $msg.Name }}Repository) GetBy{{ $msg.PrimaryKeyName }}(pa
 }
 
 // GetAll for get all from table
-func (repo *{{ ucfirst $msg.Name }}Repository) GetAll(payload *{{ ucfirst $msg.Name }}, page int64, limit int64) ([]{{ ucfirst $msg.Name }}, error) {
+func (repo *{{ ucfirst $msg.Name }}Repository) GetAll(payload *{{ ucfirst $msg.Name }}, page int64, limit int64) ([]{{ ucfirst $msg.Name }}, int, error) {
 	offset, limitInit := getOffset(page, limit)
 
 	var data []{{ ucfirst $msg.Name }}
-	db := repo.db.Set("gorm:auto_preload", true).Where(payload).Offset(offset).Limit(limitInit).Find(&data)
+	var total int
 
-	return data, db.Error
+	{{ unescape "{" }}{{ unescape "}" }}
+
+	db := repo.db.Set("gorm:auto_preload", true).Mode(&{{ ucfirst $msg.Name }}{{ unescape "{" }}{{ unescape "}" }}).Where(payload)
+	db.Count(&total)
+	db.Offset(offset).Limit(limitInit).Find(&data)
+
+	return data, total, db.Error
 
 }
 
