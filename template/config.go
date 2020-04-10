@@ -13,6 +13,7 @@ import "github.com/kelseyhightower/envconfig"
 // Config struct of configuration
 type Config struct {
 	ServiceName      string   'envconfig:"SERVICE_NAME" default:"enterprise-app-{{ ucdown .GoPackage }}"'
+	Env              string   'envconfig:"ENV" default:"stag"'
 	PORT             string   'envconfig:"PORT" default:"80"'
 	GRPCPORT         string   'envconfig:"GRPC_PORT" default:"8080"'
 	{{- if .Elastic }}
@@ -28,6 +29,7 @@ type Config struct {
 	DBPort 		 	 int   	  'envconfig:"DBPORT" default:"3306"'
 	// GRPC Gateway Information
 	GRPCClient		 string   'envconfig:"GRPCClient" default:"localhost"'
+	InternalKey		 string   'envconfig:"INTERNAL_KEY" default:"X-Internal-Token"'
 }
 
 // singleton of data

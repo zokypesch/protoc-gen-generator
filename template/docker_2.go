@@ -2,11 +2,10 @@ package template
 
 import lib "github.com/zokypesch/protoc-gen-generator/lib"
 
-var tmplDocker = `FROM golang:1.13.3
-# DO_NOT_REPLACE
+var tmplDocker2 = `FROM golang:1.13.3
 
 # Set Arguments
-ARG APP_NAME={{ ucfirst (getFirstService .Services).Name }}
+ARG APP_NAME=platform
 
 # Set go bin which doesn't appear to be set already.
 ENV GOBIN /go/bin
@@ -17,22 +16,19 @@ RUN mkdir /app
 RUN mkdir -p $SRC_DIR
 
 # Copy current directory
-COPY ./go.mod ./go.sum $SRC_DIR/
+COPY ./Gopkg.lock ./Gopkg.toml $SRC_DIR/
 WORKDIR $SRC_DIR
+
+# Go dep!
+RUN go get -u github.com/golang/dep/cmd/dep && dep ensure -vendor-only
 
 # Build my app
 COPY . $SRC_DIR/
-
-# go mod download
-RUN go mod download
-
 RUN go build -o /app/main .
 CMD ["/app/main"]
-
-
 `
 
-var ListDocker = lib.List{
+var ListDocker2 = lib.List{
 	FileType:     "Dockerfile",
 	Template:     tmplDocker,
 	Location:     "./",

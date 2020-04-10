@@ -51,14 +51,15 @@ func main() {
 {{- end}}
 	
 	handler := sv.New{{ ucfirst (getFirstService .Services).Name }}(masterService)
-	server := core.RegisterGRPC([]string{
+	server := core.RegisterGRPC("{{ ucdown (getFirstService .Services).Name }}", []string{
 		{{- range $w := .WhiteList }}
 			pb.{{ $w.ServiceName }}_{{ $w.Name }},
 		{{- end }}
 	}, cfg.INTERNALPASSWORD)
 
 	pb.Register{{ ucfirst (getFirstService .Services).Name }}Server(server, handler)
-
+	core.RegisterPrometheus(server)
+	
 	go func() {{ unescape "{" }}
 		if err := server.Serve(lis); err != nil {{ unescape "{" }}
 			log.Fatalf("failed to serve: %v", err)

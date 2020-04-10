@@ -54,7 +54,7 @@ func main() {
 		template.ListConfig,
 		template.ListService,
 		template.ListMainv3,
-		template.ListTomlv2,
+		// template.ListTomlv2,
 		template.ListDocker,
 		template.ListReadme,
 		template.ListIntegration,
