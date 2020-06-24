@@ -12,7 +12,7 @@ import "github.com/kelseyhightower/envconfig"
 
 // Config struct of configuration
 type Config struct {
-	ServiceName      string   'envconfig:"SERVICE_NAME" default:"enterprise-app-{{ ucdown .GoPackage }}"'
+	ServiceName      string   'envconfig:"SERVICE_NAME" default:"enterprise_app_{{ ucdown .GoPackage }}"'
 	Env              string   'envconfig:"ENV" default:"stag"'
 	PORT             string   'envconfig:"PORT" default:"80"'
 	GRPCPORT         string   'envconfig:"GRPC_PORT" default:"8080"'
@@ -27,9 +27,14 @@ type Config struct {
 	DBUser 			 string   'envconfig:"DBUSER" default:"root"'
 	DBPassword 		 string   'envconfig:"DBPASSWORD" default:""'
 	DBPort 		 	 int   	  'envconfig:"DBPORT" default:"3306"'
+	DBLog 		 	 bool   'envconfig:"DBPASSWORD" default:"false"'
+	DBMaxOpen 		 int   'envconfig:"DBPASSWORD" default:"30"'
+	DBMaxIdle 		 int   'envconfig:"DBPASSWORD" default:"10"'
 	// GRPC Gateway Information
 	GRPCClient		 string   'envconfig:"GRPCClient" default:"localhost"'
 	InternalKey		 string   'envconfig:"INTERNAL_KEY" default:"X-Internal-Token"'
+	UserApiAddress  string 'envconfig:"USER_API_ADDRESS" default:"172.31.219.76"'
+	UserApiPassword string 'envconfig:"USER_API_PASSWORD" default:"pasDarkSecure"'
 }
 
 // singleton of data

@@ -103,7 +103,6 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 		messageName := messageType.GetName()
 		primaryKeyName := ""
 		primaryKeyType := ""
-		isFieldMessage := false
 
 		var newField []*Field
 
@@ -122,6 +121,7 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 			originalName := messageField.GetName()
 			originalType := typeData
 			postmanType := "string"
+			isFieldMessage := false
 
 			isOptional := false
 			if typeData == "TYPE_MESSAGE" || messageField.GetTypeName() != "" {
