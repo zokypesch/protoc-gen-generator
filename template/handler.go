@@ -27,11 +27,12 @@ import  (
 type {{ ucfirst $service.Name }} struct{
 	svc *domain.{{ ucfirst $service.Name }}Service
 	validate *validator.Validate
+	pb.Unimplemented{{ ucfirst $service.Name }}Server
 }
 
 func New{{ ucfirst $service.Name }}(svc *domain.{{ ucfirst $service.Name }}Service) *{{ ucfirst $service.Name }} {
 	validate := validator.New()
-	return &{{ ucfirst $service.Name }}{{ unescape "{" }}svc, validate{{ unescape "}" }}
+	return &{{ svc: ucfirst $service.Name }}{{ unescape "{" }}svc, validate: validate{{ unescape "}" }}
 }
 
 {{- range $method := $service.Methods }}

@@ -67,7 +67,7 @@ func main() {
 	server := core.RegisterGRPCWithPrometh(svcName, interceptor)
 	
 	pb.Register{{ ucfirst (getFirstService .Services).Name }}Server(server, handler)
-	core.RegisterPrometheus(server)
+	core.RegisterPrometheus(server, 9092)
 	
 	go func() {{ unescape "{" }}
 		if err := server.Serve(lis); err != nil {{ unescape "{" }}

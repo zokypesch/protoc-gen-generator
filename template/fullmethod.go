@@ -28,7 +28,9 @@ var (
 {{- end}}
 {{- end}}
 	{{ "}" }}
-	Pattern_health_check_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"_health"}, "", runtime.AssumeColonVerbOpt(true)))
+	Pattern_health_check_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"_health"}, ""))
+	// Deprecated on v2 grpc gateway
+	// Pattern_health_check_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"_health"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 func InitCallGRPC() error {
@@ -37,7 +39,8 @@ func InitCallGRPC() error {
 	forward_{{ $service.Name }}_{{ $method.Name }}_0 = core.LocalForward
 {{- end}}
 {{- end}}
-	runtime.HTTPError = core.CustomHTTPError
+	// Deprecated on v2 grpc gateway
+	// runtime.HTTPError = CustomHTTPError
 
 	return nil
 }
