@@ -18,7 +18,7 @@ import  (
 	core "{{ .Src }}/core"
 	{{- end}}
 	{{- if .TimeStamp }}
-	ptypes "github.com/golang/protobuf/ptypes"
+	// ptypes "github.com/golang/protobuf/ptypes"
 	{{- end}}
 )
 

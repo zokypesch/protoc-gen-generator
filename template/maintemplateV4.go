@@ -54,7 +54,9 @@ func main() {
 	masterService := {{ ucdown (getFirstService .Services).Name }}.New{{ ucfirst (getFirstService .Services).Name }}Service(masterRepo)
 {{- end}}
 	
-	handler := sv.New{{ ucfirst (getFirstService .Services).Name }}(masterService)
+	logrus := core.Logs
+	core.InitLogWithApm()
+	handler := sv.New{{ ucfirst (getFirstService .Services).Name }}(masterService,logrus)
 
 	auth := middleware.NewAuthInterceptor(cfg.INTERNALPASSWORD, cfg.InternalKey, userClient)
 	interceptor := auth.GetUnaryCustom([]string{
@@ -64,7 +66,7 @@ func main() {
 	})
 
 	svcName := fmt.Sprintf("%s_%s", cfg.ServiceName, cfg.Env)
-	server := core.RegisterGRPCWithPrometh(svcName, interceptor)
+	server := core.RegisterGRPCWithARM(svcName, interceptor)
 	
 	pb.Register{{ ucfirst (getFirstService .Services).Name }}Server(server, handler)
 	core.RegisterPrometheus(server, 9092)

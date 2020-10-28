@@ -15,10 +15,11 @@ import  (
 	empty "github.com/golang/protobuf/ptypes/empty"
 	{{- end}}
 	{{- if .TimeStamp }}
-	ptypes "github.com/golang/protobuf/ptypes"
+	// ptypes "github.com/golang/protobuf/ptypes"
 	{{- end}}
 	validator "github.com/go-playground/validator"
 	domain "{{ .Src }}/{{ ucdown (getFirstService .Services).Name }}"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -28,11 +29,12 @@ type {{ ucfirst $service.Name }} struct{
 	svc *domain.{{ ucfirst $service.Name }}Service
 	validate *validator.Validate
 	pb.Unimplemented{{ ucfirst $service.Name }}Server
+	log *logrus.Logger
 }
 
-func New{{ ucfirst $service.Name }}(svc *domain.{{ ucfirst $service.Name }}Service) *{{ ucfirst $service.Name }} {
+func New{{ ucfirst $service.Name }}(svc *domain.{{ ucfirst $service.Name }}Service, log *logrus.Logger) *{{ ucfirst $service.Name }} {
 	validate := validator.New()
-	return &{{ svc: ucfirst $service.Name }}{{ unescape "{" }}svc, validate: validate{{ unescape "}" }}
+	return &{{ ucfirst $service.Name }}{{ unescape "{" }}svc: svc, log: log, validate: validate{{ unescape "}" }}
 }
 
 {{- range $method := $service.Methods }}
