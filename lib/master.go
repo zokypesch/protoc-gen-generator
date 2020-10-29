@@ -78,14 +78,16 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 	if protoFile.GetOptions().GetGoPackage() == "" {
 		return nil, "", Data{}, errors.New("missing go_package")
 	}
+	newGoPkg := strings.Split(protoFile.GetOptions().GetGoPackage(), "/")
 
 	// initial message
 	datas := Data{
 		FileName:  *protoFile.Name,
-		GoPackage: protoFile.GetOptions().GetGoPackage(),
-		Package:   protoFile.GetPackage(),
-		Services:  make([]Service, len(protoFile.Service)),
-		Messages:  make([]Message, len(protoFile.MessageType)),
+		GoPackage: newGoPkg[len(newGoPkg)-1],
+		// GoPackage: protoFile.GetOptions().GetGoPackage(),
+		Package:  protoFile.GetPackage(),
+		Services: make([]Service, len(protoFile.Service)),
+		Messages: make([]Message, len(protoFile.MessageType)),
 	}
 
 	var newMessage []Message
@@ -548,7 +550,8 @@ func (g *Operations) generateFile(protoFile *descriptor.FileDescriptorProto, lis
 	return &plugin.CodeGeneratorResponse_File{
 		Name:    proto.String(ucFirst(protoFileBaseName(*protoFile.Name)) + curList.FileType), // ".custom.pb.go"
 		Content: proto.String(string(formatted)),
-	}, protoFile.GetOptions().GetGoPackage(), datas, nil
+		// }, protoFile.GetOptions().GetGoPackage(), datas, nil
+	}, newGoPkg[len(newGoPkg)-1], datas, nil
 }
 
 func protoFileBaseName(name string) string {

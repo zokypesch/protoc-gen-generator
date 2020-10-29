@@ -4,7 +4,6 @@ package unused
 
 import (
 	"bytes"
-	"encoding/json"
 	"log"
 	"strconv"
 
@@ -13,8 +12,6 @@ import (
 	"html/template"
 	"path"
 	"unicode"
-
-	"reflect"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
@@ -198,19 +195,20 @@ func (g *fullMethodsGenerator) generateFile(protoFile *descriptor.FileDescriptor
 			// for _, vUnin := range method.GetOptions().GetIdempotencyLevel().String() {
 
 			// }
-			methOpt := method.GetOptions()
+			// methOpt := method.GetOptions()
 
 			// ref := proto.GetProperties(reflect.TypeOf(methOpt.XXX_Unmarshal))
 			// log.Println(methOpt.GetUninterpretedOption(), methOpt.GetIdempotencyLevel(), methOpt.String())
-			log.Println(methOpt.String())
+			// log.Println(methOpt.String())
 			// proto.Get
 
-			opt, errJson := json.Marshal(methOpt.XXX_InternalExtensions)
-			log.Println(errJson)
-			var resultOpt interface{}
-			errs := json.Unmarshal(opt, &resultOpt)
-			log.Println(errs)
-			log.Println(resultOpt, reflect.TypeOf(methOpt.XXX_InternalExtensions))
+			// deprecated
+			// opt, errJson := json.Marshal(methOpt.XXX_InternalExtensions)
+			// log.Println(errJson)
+			// var resultOpt interface{}
+			// errs := json.Unmarshal(opt, &resultOpt)
+			// log.Println(errs)
+			// log.Println(resultOpt, reflect.TypeOf(methOpt.XXX_InternalExtensions))
 			// for kOpt, vOpt := range resultOpt {
 			// 	log.Println(kOpt, vOpt)
 			// }
